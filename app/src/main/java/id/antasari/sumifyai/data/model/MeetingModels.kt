@@ -42,5 +42,6 @@ data class MeetingLocal(
     var pdfDownloadId: Long? = null,
     var pdfFileName: String? = null,
     var pdfLocalUri: String? = null,
-    var pdfDownloadedAt: Long? = null
+    var pdfDownloadedAt: Long? = null,
+    val isFavorite: Boolean = false
 )

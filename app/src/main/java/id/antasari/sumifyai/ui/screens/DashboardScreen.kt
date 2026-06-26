@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -75,6 +76,7 @@ import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
 import id.antasari.sumifyai.ui.viewmodel.MainViewModel
 import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -254,6 +256,28 @@ fun DashboardScreen(
                                     color = TextSecondary
                                 )
                             }
+
+                            Box(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .height(30.dp)
+                                    .background(BorderLight)
+                            )
+
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                val favoriteCount = meetings.count { it.isFavorite }
+                                Text(
+                                    text = favoriteCount.toString(),
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFE4A100)
+                                )
+                                Text(
+                                    text = "Important",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary
+                                )
+                            }
                         }
                     }
 
@@ -350,6 +374,7 @@ fun DashboardScreen(
                         MeetingHistoryItem(
                             meeting = meeting,
                             onClick = { onNavigateToDetails(meeting.id, meeting.status) },
+                            onToggleFavorite = { viewModel.toggleMeetingFavorite(meeting.id) },
                             onDelete = { viewModel.deleteMeeting(meeting.id) }
                         )
                     }
@@ -367,6 +392,7 @@ fun DashboardScreen(
 fun MeetingHistoryItem(
     meeting: MeetingLocal,
     onClick: () -> Unit,
+    onToggleFavorite: () -> Unit,
     onDelete: () -> Unit
 ) {
     val dateString = remember(meeting.createdAt) {
@@ -390,32 +416,71 @@ fun MeetingHistoryItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .border(BorderStroke(1.dp, BorderLight), shape = RoundedCornerShape(16.dp)),
+            .border(
+                BorderStroke(
+                    width = 1.dp,
+                    color = if (meeting.isFavorite) Color(0xFFFFD56A) else BorderLight
+                ),
+                shape = RoundedCornerShape(18.dp)
+            ),
         colors = CardDefaults.cardColors(containerColor = SurfaceLightCard),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(18.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (meeting.isFavorite) 4.dp else 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = meeting.title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = dateString,
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(PrimaryIndigo.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = meeting.title.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "S",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryIndigo
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = meeting.title,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = dateString,
+                            fontSize = 11.sp,
+                            color = TextMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                if (meeting.description.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = meeting.description,
+                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -443,7 +508,7 @@ fun MeetingHistoryItem(
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = meeting.language.uppercase(),
+                            text = meeting.language.uppercase(Locale.getDefault()),
                             color = TextSecondary,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium
@@ -452,16 +517,39 @@ fun MeetingHistoryItem(
                 }
             }
 
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(
+                    onClick = onToggleFavorite,
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(
+                            color = if (meeting.isFavorite) Color(0xFFFFF4CC) else BorderLight.copy(alpha = 0.35f),
+                            shape = CircleShape
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = if (meeting.isFavorite) "Remove from important" else "Mark as important",
+                        tint = if (meeting.isFavorite) Color(0xFFE4A100) else TextMuted,
+                        modifier = Modifier.size(17.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
             IconButton(
                 onClick = onDelete,
-                modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(ColorFailed.copy(alpha = 0.08f), CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete item",
                     tint = ColorFailed,
-                    modifier = Modifier.size(15.dp)
+                        modifier = Modifier.size(16.dp)
                 )
+            }
             }
         }
     }

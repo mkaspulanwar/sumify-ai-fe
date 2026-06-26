@@ -418,6 +418,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun toggleMeetingFavorite(meetingId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val meeting = LocalHistoryManager.loadHistory(context).find { it.id == meetingId } ?: return@launch
+            LocalHistoryManager.updateMeetingFavorite(context, meetingId, !meeting.isFavorite)
+            loadMeetingsHistory()
+        }
+    }
+
     fun downloadPdf(meetingId: String, title: String, downloadUrl: String) {
         try {
             val fileName = "SumifyAI_${title.replace(" ", "_")}_${System.currentTimeMillis()}.pdf"

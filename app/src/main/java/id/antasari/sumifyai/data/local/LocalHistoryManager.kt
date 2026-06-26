@@ -56,7 +56,7 @@ object LocalHistoryManager {
         val currentHistory = loadHistory(context).toMutableList()
         val index = currentHistory.indexOfFirst { it.id == meeting.id }
         if (index != -1) {
-            currentHistory[index] = meeting
+            currentHistory[index] = meeting.copy(isFavorite = currentHistory[index].isFavorite)
         } else {
             // Prepend new meetings to show the latest first
             currentHistory.add(0, meeting)
@@ -102,6 +102,16 @@ object LocalHistoryManager {
                 pdfDownloadedAt = downloadedAt
             )
             currentHistory[index] = updated
+            saveHistory(context, currentHistory)
+        }
+    }
+
+    fun updateMeetingFavorite(context: Context, id: String, isFavorite: Boolean) {
+        val currentHistory = loadHistory(context).toMutableList()
+        val index = currentHistory.indexOfFirst { it.id == id }
+        if (index != -1) {
+            val meeting = currentHistory[index]
+            currentHistory[index] = meeting.copy(isFavorite = isFavorite)
             saveHistory(context, currentHistory)
         }
     }
