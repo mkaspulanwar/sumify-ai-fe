@@ -20,11 +20,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,6 +36,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.ArrowBack
@@ -65,7 +69,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -90,7 +93,7 @@ import id.antasari.sumifyai.ui.theme.TextSecondary
 import id.antasari.sumifyai.ui.viewmodel.MainViewModel
 import id.antasari.sumifyai.ui.viewmodel.UploadState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateSummaryScreen(
     viewModel: MainViewModel,
@@ -300,31 +303,71 @@ fun CreateSummaryScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(130.dp)
+                        .heightIn(min = 184.dp)
                         .clickable { filePickerLauncher.launch("audio/*") }
-                        .border(BorderStroke(1.dp, BorderLight), shape = RoundedCornerShape(16.dp)),
+                        .border(BorderStroke(1.5.dp, PrimaryIndigo.copy(alpha = 0.22f)), shape = RoundedCornerShape(18.dp)),
                     colors = CardDefaults.cardColors(containerColor = SurfaceLightCard),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(18.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 18.dp, vertical = 18.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         if (selectedAudioName == null) {
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .background(PrimaryIndigo.copy(alpha = 0.06f), CircleShape)
+                                    .border(BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.24f)), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .background(PrimaryIndigo.copy(alpha = 0.12f), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Add audio file",
+                                        tint = PrimaryIndigo,
+                                        modifier = Modifier.size(23.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Choose Audio File",
+                                text = "Choose or Drop Audio File",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Supports MP3, M4A, WAV formats",
+                                text = "Select a meeting recording from your device",
                                 fontSize = 12.sp,
-                                color = TextMuted
+                                color = TextMuted,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 10.dp)
                             )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                AudioFormatBadge("MP3")
+                                AudioFormatBadge("M4A")
+                                AudioFormatBadge("WAV")
+                                AudioFormatBadge("AAC")
+                                AudioFormatBadge("FLAC")
+                                AudioFormatBadge("OGG")
+                                AudioFormatBadge("WEBM")
+                            }
                         } else {
                             Row(
                                 modifier = Modifier
@@ -575,5 +618,23 @@ fun CreateSummaryScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
         }
+    }
+}
+
+@Composable
+private fun AudioFormatBadge(label: String) {
+    Box(
+        modifier = Modifier
+            .background(SecondaryTeal.copy(alpha = 0.10f), RoundedCornerShape(999.dp))
+            .border(BorderStroke(1.dp, SecondaryTeal.copy(alpha = 0.24f)), RoundedCornerShape(999.dp))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = SecondaryTeal,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
