@@ -39,6 +39,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -95,6 +97,7 @@ fun DashboardScreen(
     val isDemoMode by viewModel.isDemoMode.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var isRefreshing by remember { mutableStateOf(false) }
+    var meetingPendingDelete by remember { mutableStateOf<MeetingLocal?>(null) }
     val pullToRefreshState = rememberPullToRefreshState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -103,6 +106,59 @@ fun DashboardScreen(
             it.title.contains(searchQuery, ignoreCase = true) ||
                 it.description.contains(searchQuery, ignoreCase = true)
         }
+    }
+
+    meetingPendingDelete?.let { meeting ->
+        AlertDialog(
+            onDismissRequest = { meetingPendingDelete = null },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = ColorFailed
+                )
+            },
+            title = {
+                Text(
+                    text = "Delete Report?",
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = "This will permanently remove \"${meeting.title}\" from your report summary.",
+                    color = TextSecondary
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteMeeting(meeting.id)
+                        meetingPendingDelete = null
+                    }
+                ) {
+                    Text(
+                        text = "Delete",
+                        color = ColorFailed,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { meetingPendingDelete = null }) {
+                    Text(
+                        text = "Cancel",
+                        color = TextSecondary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            containerColor = SurfaceLightCard,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary,
+            shape = RoundedCornerShape(18.dp)
+        )
     }
 
     Scaffold(
@@ -386,7 +442,7 @@ fun DashboardScreen(
                             meeting = meeting,
                             onClick = { onNavigateToDetails(meeting.id, meeting.status) },
                             onToggleFavorite = { viewModel.toggleMeetingFavorite(meeting.id) },
-                            onDelete = { viewModel.deleteMeeting(meeting.id) }
+                            onDelete = { meetingPendingDelete = meeting }
                         )
                     }
 
