@@ -11,6 +11,7 @@ import androidx.navigation.navArgument
 import id.antasari.sumifyai.ui.screens.CreateSummaryScreen
 import id.antasari.sumifyai.ui.screens.DashboardScreen
 import id.antasari.sumifyai.ui.screens.DetailsScreen
+import id.antasari.sumifyai.ui.screens.FavoriteSummariesScreen
 import id.antasari.sumifyai.ui.screens.SettingsScreen
 import id.antasari.sumifyai.ui.screens.StatusProgressScreen
 import id.antasari.sumifyai.ui.screens.WelcomeScreen
@@ -20,6 +21,7 @@ object Routes {
     const val WELCOME = "welcome"
     const val DASHBOARD = "dashboard"
     const val CREATE_SUMMARY = "create_summary"
+    const val FAVORITE_SUMMARIES = "favorite_summaries"
     const val SETTINGS = "settings"
     const val STATUS_PROGRESS = "status_progress/{meetingId}"
     const val DETAILS = "details/{meetingId}"
@@ -63,6 +65,25 @@ fun AppNavigation(
                 },
                 onNavigateToSettings = {
                     navController.navigate(Routes.SETTINGS)
+                },
+                onNavigateToFavorites = {
+                    navController.navigate(Routes.FAVORITE_SUMMARIES)
+                },
+                onNavigateToDetails = { meetingId, status ->
+                    if (status.equals("completed", ignoreCase = true) || status.equals("failed", ignoreCase = true)) {
+                        navController.navigate(Routes.details(meetingId))
+                    } else {
+                        navController.navigate(Routes.statusProgress(meetingId))
+                    }
+                }
+            )
+        }
+
+        composable(Routes.FAVORITE_SUMMARIES) {
+            FavoriteSummariesScreen(
+                viewModel = viewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
                 },
                 onNavigateToDetails = { meetingId, status ->
                     if (status.equals("completed", ignoreCase = true) || status.equals("failed", ignoreCase = true)) {
@@ -125,7 +146,7 @@ fun AppNavigation(
                 meetingId = meetingId,
                 viewModel = viewModel,
                 onNavigateBack = {
-                    navController.popBackStack(Routes.DASHBOARD, false)
+                    navController.popBackStack()
                 }
             )
         }

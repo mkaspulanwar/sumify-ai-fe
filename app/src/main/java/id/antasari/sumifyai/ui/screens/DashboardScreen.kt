@@ -88,6 +88,7 @@ fun DashboardScreen(
     viewModel: MainViewModel,
     onNavigateToCreate: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToFavorites: () -> Unit,
     onNavigateToDetails: (String, String) -> Unit
 ) {
     val meetings by viewModel.history.collectAsState()
@@ -117,6 +118,14 @@ fun DashboardScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToFavorites) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Saved summaries",
+                            tint = SumifyTopBarContentColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
