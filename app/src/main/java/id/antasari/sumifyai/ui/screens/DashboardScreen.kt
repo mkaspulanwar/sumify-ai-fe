@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,10 +20,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
@@ -50,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -469,6 +471,7 @@ fun MeetingHistoryItem(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
+
                 }
 
                 if (meeting.description.isNotBlank()) {
@@ -484,73 +487,86 @@ fun MeetingHistoryItem(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .background(statusColor.copy(alpha = 0.08f), RoundedCornerShape(6.dp))
-                            .border(BorderStroke(0.5.dp, statusColor.copy(alpha = 0.3f)), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = statusText,
-                            color = statusColor,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .background(BorderLight.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
-                            .border(BorderStroke(0.5.dp, BorderLight), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = meeting.language.uppercase(Locale.getDefault()),
-                            color = TextSecondary,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconButton(
-                    onClick = onToggleFavorite,
-                    modifier = Modifier
-                        .size(34.dp)
-                        .background(
-                            color = if (meeting.isFavorite) Color(0xFFFFF4CC) else BorderLight.copy(alpha = 0.35f),
-                            shape = CircleShape
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
+                    ReportSummaryChip(
+                        icon = if (meeting.status.equals("completed", ignoreCase = true)) Icons.Default.Check else Icons.Default.Info,
+                        text = statusText,
+                        contentDescription = "Status $statusText",
+                        contentColor = statusColor,
+                        containerColor = statusColor.copy(alpha = 0.08f),
+                        borderColor = statusColor.copy(alpha = 0.28f)
+                    )
+
+                    ReportSummaryChip(
+                        icon = Icons.Default.Star,
+                        text = if (meeting.isFavorite) "Saved" else "Save",
                         contentDescription = if (meeting.isFavorite) "Remove from important" else "Mark as important",
-                        tint = if (meeting.isFavorite) Color(0xFFE4A100) else TextMuted,
-                        modifier = Modifier.size(17.dp)
+                        contentColor = if (meeting.isFavorite) Color(0xFFB77900) else TextSecondary,
+                        containerColor = if (meeting.isFavorite) Color(0xFFFFF2C2) else SurfaceLight,
+                        borderColor = if (meeting.isFavorite) Color(0xFFE4A100) else BorderLight,
+                        onClick = onToggleFavorite
+                    )
+
+                    ReportSummaryChip(
+                        icon = Icons.Default.Delete,
+                        text = "Delete",
+                        contentDescription = "Delete item",
+                        contentColor = ColorFailed,
+                        containerColor = Color(0xFFFFF5F5),
+                        borderColor = ColorFailed.copy(alpha = 0.32f),
+                        onClick = onDelete
                     )
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-            IconButton(
-                onClick = onDelete,
-                    modifier = Modifier
-                        .size(34.dp)
-                        .background(ColorFailed.copy(alpha = 0.08f), CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete item",
-                    tint = ColorFailed,
-                        modifier = Modifier.size(16.dp)
-                )
-            }
             }
         }
+    }
+}
+
+@Composable
+private fun RowScope.ReportSummaryChip(
+    icon: ImageVector?,
+    text: String,
+    contentDescription: String,
+    contentColor: Color,
+    containerColor: Color,
+    borderColor: Color,
+    onClick: (() -> Unit)? = null
+) {
+    val chipModifier = Modifier
+        .weight(1f)
+        .height(36.dp)
+        .background(containerColor, RoundedCornerShape(10.dp))
+        .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(10.dp))
+
+    Row(
+        modifier = if (onClick != null) {
+            chipModifier.clickable(onClick = onClick)
+        } else {
+            chipModifier
+        }.padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = contentColor,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+        Text(
+            text = text,
+            color = contentColor,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
