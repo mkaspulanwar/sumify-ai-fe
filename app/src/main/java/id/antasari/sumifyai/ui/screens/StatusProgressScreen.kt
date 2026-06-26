@@ -90,7 +90,8 @@ fun StatusProgressScreen(
         }
     }
 
-    val currentStatus = activeMeeting?.status?.lowercase() ?: "queued"
+    val displayedMeeting = activeMeeting?.takeIf { it.id == meetingId }
+    val currentStatus = displayedMeeting?.status?.lowercase() ?: "queued"
     val isCompleted = currentStatus == "completed"
     val isFailed = currentStatus == "failed"
 
@@ -140,7 +141,7 @@ fun StatusProgressScreen(
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = activeMeeting?.title ?: "Meeting Summary",
+                    text = displayedMeeting?.title ?: "Meeting Summary",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
@@ -149,7 +150,7 @@ fun StatusProgressScreen(
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 Text(
-                    text = activeMeeting?.description?.ifEmpty { "No description provided." } ?: "Processing...",
+                    text = displayedMeeting?.description?.ifEmpty { "No description provided." } ?: "Processing...",
                     fontSize = 13.sp,
                     color = TextSecondary
                 )
@@ -164,22 +165,26 @@ fun StatusProgressScreen(
                     .weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
-                stages.forEachIndexed { index, stage ->
-                    val stageState = remember(currentStageIndex, isFailed, currentStatus) {
-                        when {
-                            isFailed && index == currentStageIndex -> StageState.Failed
-                            isFailed && index > currentStageIndex -> StageState.Pending
-                            index < currentStageIndex -> StageState.Completed
-                            index == currentStageIndex -> StageState.Active
-                            else -> StageState.Pending
+                if (isCompleted) {
+                    SummaryReadyIndicator()
+                } else {
+                    stages.forEachIndexed { index, stage ->
+                        val stageState = remember(currentStageIndex, isFailed, currentStatus) {
+                            when {
+                                isFailed && index == currentStageIndex -> StageState.Failed
+                                isFailed && index > currentStageIndex -> StageState.Pending
+                                index < currentStageIndex -> StageState.Completed
+                                index == currentStageIndex -> StageState.Active
+                                else -> StageState.Pending
+                            }
                         }
-                    }
 
-                    StageItem(
-                        stage = stage,
-                        state = stageState,
-                        isLast = index == stages.lastIndex
-                    )
+                        StageItem(
+                            stage = stage,
+                            state = stageState,
+                            isLast = index == stages.lastIndex
+                        )
+                    }
                 }
             }
 
@@ -259,6 +264,50 @@ fun StatusProgressScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SummaryReadyIndicator() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(112.dp)
+                .background(ColorCompleted.copy(alpha = 0.12f), CircleShape)
+                .border(BorderStroke(2.dp, ColorCompleted), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "Summary completed",
+                tint = ColorCompleted,
+                modifier = Modifier.size(58.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Text(
+            text = "Summary Ready",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = "Your PDF document has been successfully created and saved.",
+            fontSize = 13.sp,
+            color = TextSecondary,
+            textAlign = TextAlign.Center,
+            lineHeight = 18.sp
+        )
     }
 }
 

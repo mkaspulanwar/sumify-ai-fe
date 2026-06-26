@@ -342,6 +342,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startPollingMeetingStatus(meetingId: String) {
         pollingJob?.cancel()
+        if (_activeMeeting.value?.id != meetingId) {
+            _activeMeeting.value = null
+        }
         
         viewModelScope.launch(Dispatchers.IO) {
             val list = LocalHistoryManager.loadHistory(context)
