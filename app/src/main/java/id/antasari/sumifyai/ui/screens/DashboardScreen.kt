@@ -475,6 +475,7 @@ fun MeetingHistoryItem(
             "generating_pdf" -> "Generating PDF" to ColorGeneratingPdf
             "completed" -> "Completed" to ColorCompleted
             "failed" -> "Failed" to ColorFailed
+            "cancelled" -> "Cancelled" to ColorQueued
             else -> meeting.status to ColorQueued
         }
     }

@@ -360,7 +360,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val updated = list.find { it.id == meetingId }
                     _activeMeeting.value = updated
                     
-                    if (updated?.status?.lowercase() == "completed" || updated?.status?.lowercase() == "failed") {
+                    if (updated?.status?.lowercase().isTerminalMeetingStatus()) {
                         shouldPoll = false
                     }
                 }
@@ -368,6 +368,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             // Real network polling
             pollingJob = viewModelScope.launch(Dispatchers.IO) {
+                val localMeeting = LocalHistoryManager.loadHistory(context).find { it.id == meetingId }
+                if (localMeeting?.status?.lowercase().isTerminalMeetingStatus()) {
+                    _activeMeeting.value = localMeeting
+                    return@launch
+                }
+
                 var shouldPoll = true
                 while (shouldPoll) {
                     try {
@@ -392,8 +398,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _activeMeeting.value = updatedMeeting
                         loadMeetingsHistory()
 
-                        if (details.status.equals("completed", ignoreCase = true) || 
-                            details.status.equals("failed", ignoreCase = true)) {
+                        if (details.status.lowercase().isTerminalMeetingStatus()) {
                             shouldPoll = false
                         }
                     } catch (e: Exception) {
@@ -410,6 +415,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun stopPolling() {
         pollingJob?.cancel()
         pollingJob = null
+    }
+
+    fun cancelMeetingProcessing(meetingId: String) {
+        pollingJob?.cancel()
+        pollingJob = null
+
+        viewModelScope.launch(Dispatchers.IO) {
+            LocalHistoryManager.updateMeetingStatus(
+                context = context,
+                id = meetingId,
+                status = "cancelled"
+            )
+            val updated = LocalHistoryManager.loadHistory(context).find { it.id == meetingId }
+            _activeMeeting.value = updated
+            loadMeetingsHistory()
+        }
     }
 
     fun deleteMeeting(meetingId: String) {
@@ -502,6 +523,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         return result
+    }
+
+    private fun String?.isTerminalMeetingStatus(): Boolean {
+        return equals("completed", ignoreCase = true) ||
+            equals("failed", ignoreCase = true) ||
+            equals("cancelled", ignoreCase = true)
     }
 
     fun formatDuration(seconds: Int): String {

@@ -72,6 +72,11 @@ object LocalHistoryManager {
         val index = currentHistory.indexOfFirst { it.id == id }
         if (index != -1) {
             val meeting = currentHistory[index]
+            if (meeting.status.equals("cancelled", ignoreCase = true) &&
+                !status.equals("cancelled", ignoreCase = true)
+            ) {
+                return
+            }
             val updated = meeting.copy(
                 status = status,
                 downloadUrl = downloadUrl ?: meeting.downloadUrl,

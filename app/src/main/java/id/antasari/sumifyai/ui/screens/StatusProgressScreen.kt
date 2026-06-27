@@ -1,8 +1,6 @@
 package id.antasari.sumifyai.ui.screens
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -22,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,7 +30,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -101,6 +99,8 @@ fun StatusProgressScreen(
     val currentStatus = displayedMeeting?.status?.lowercase() ?: "queued"
     val isCompleted = currentStatus == "completed"
     val isFailed = currentStatus == "failed"
+    val isCancelled = currentStatus == "cancelled"
+    val isProcessing = !isCompleted && !isFailed && !isCancelled
 
     val stages = listOf(
         MeetingStage("queued", "Uploaded & Queued", "Your audio file is successfully uploaded and queued for parsing."),
@@ -150,11 +150,7 @@ fun StatusProgressScreen(
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = SumifyTopBarContentColor)
                     }
                 },
-                actions = {
-                    IconButton(onClick = { viewModel.startPollingMeetingStatus(meetingId) }) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Force reload", tint = SumifyTopBarContentColor)
-                    }
-                }
+                actions = {}
             )
         }
     ) { innerPadding ->
@@ -163,7 +159,6 @@ fun StatusProgressScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(24.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             
@@ -195,14 +190,14 @@ fun StatusProgressScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AnimatedContent(
                     targetState = showSummaryReady,
                     transitionSpec = {
                         fadeIn(animationSpec = tween(180)) togetherWith
-                            fadeOut(animationSpec = tween(120)) using
-                            SizeTransform(clip = false)
+                            fadeOut(animationSpec = tween(120))
                     },
                     label = "processing-content"
                 ) { ready ->
@@ -213,8 +208,8 @@ fun StatusProgressScreen(
                             stages.forEachIndexed { index, stage ->
                                 val stageState = when {
                                     isTimelineComplete -> StageState.Completed
-                                    isFailed && index == visualStageIndex -> StageState.Failed
-                                    isFailed && index > visualStageIndex -> StageState.Pending
+                                    (isFailed || isCancelled) && index == visualStageIndex -> StageState.Failed
+                                    (isFailed || isCancelled) && index > visualStageIndex -> StageState.Pending
                                     index < visualStageIndex -> StageState.Completed
                                     index == visualStageIndex -> StageState.Active
                                     else -> StageState.Pending
@@ -233,13 +228,19 @@ fun StatusProgressScreen(
 
             // Action Buttons
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 128.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (isFailed) {
+                if (isFailed || isCancelled) {
                     Text(
-                        text = "Summarization failed. Please check your backend connections.",
-                        color = ColorFailed,
+                        text = if (isCancelled) {
+                            "Processing was cancelled. This report remains saved in your summary history."
+                        } else {
+                            "Summarization failed. Please check your backend connections."
+                        },
+                        color = if (isCancelled) TextSecondary else ColorFailed,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -264,9 +265,11 @@ fun StatusProgressScreen(
                             modifier = Modifier.weight(1f)
                         )
                     }
+                } else {
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                AnimatedVisibility(visible = showSummaryReady) {
+                if (showSummaryReady) {
                     Button(
                         onClick = onNavigateToDetails,
                         modifier = Modifier
@@ -290,19 +293,49 @@ fun StatusProgressScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(12.dp))
+                } else if (isProcessing) {
+                    Button(
+                        onClick = { viewModel.cancelMeetingProcessing(meetingId) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = ColorFailed.copy(alpha = 0.08f)),
+                        border = BorderStroke(1.dp, ColorFailed.copy(alpha = 0.32f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel processing",
+                            tint = ColorFailed,
+                            modifier = Modifier.size(17.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Batalkan",
+                            color = ColorFailed,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(64.dp))
                 }
 
                 Button(
                     onClick = onNavigateBack,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    border = BorderStroke(1.dp, BorderLight),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
+                    border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.28f)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = if (showSummaryReady) "Back to Dashboard" else "Run in Background",
-                        color = TextSecondary,
-                        fontSize = 14.sp
+                        text = if (showSummaryReady || isCancelled) "Back to Dashboard" else "Run in Background",
+                        color = PrimaryIndigo,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }

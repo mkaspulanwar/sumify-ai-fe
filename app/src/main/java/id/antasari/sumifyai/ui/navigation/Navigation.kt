@@ -70,7 +70,7 @@ fun AppNavigation(
                     navController.navigate(Routes.FAVORITE_SUMMARIES)
                 },
                 onNavigateToDetails = { meetingId, status ->
-                    if (status.equals("completed", ignoreCase = true) || status.equals("failed", ignoreCase = true)) {
+                    if (status.isFinalReportStatus()) {
                         navController.navigate(Routes.details(meetingId))
                     } else {
                         navController.navigate(Routes.statusProgress(meetingId))
@@ -86,7 +86,7 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onNavigateToDetails = { meetingId, status ->
-                    if (status.equals("completed", ignoreCase = true) || status.equals("failed", ignoreCase = true)) {
+                    if (status.isFinalReportStatus()) {
                         navController.navigate(Routes.details(meetingId))
                     } else {
                         navController.navigate(Routes.statusProgress(meetingId))
@@ -151,4 +151,10 @@ fun AppNavigation(
             )
         }
     }
+}
+
+private fun String.isFinalReportStatus(): Boolean {
+    return equals("completed", ignoreCase = true) ||
+        equals("failed", ignoreCase = true) ||
+        equals("cancelled", ignoreCase = true)
 }
