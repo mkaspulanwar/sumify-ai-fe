@@ -50,8 +50,8 @@ class AudioRecorder(private val context: Context) {
     /**
      * Stops the active recording.
      */
-    fun stop(): File? {
-        if (!isRecording) return null
+    fun stop() {
+        if (!isRecording) return
 
         try {
             mediaRecorder?.stop()
@@ -60,7 +60,6 @@ class AudioRecorder(private val context: Context) {
         } finally {
             releaseRecorder()
         }
-        return null
     }
 
     private fun releaseRecorder() {

@@ -20,7 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
@@ -47,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -58,7 +57,6 @@ import id.antasari.sumifyai.ui.theme.BorderLight
 import id.antasari.sumifyai.ui.components.SumifyTopAppBar
 import id.antasari.sumifyai.ui.components.SumifyTopBarContentColor
 import id.antasari.sumifyai.ui.theme.PrimaryIndigo
-import id.antasari.sumifyai.ui.theme.SecondaryTeal
 import id.antasari.sumifyai.ui.theme.SurfaceLightCard
 import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
@@ -85,7 +83,7 @@ fun SettingsScreen(
                 title = { Text("Settings", color = SumifyTopBarContentColor, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = SumifyTopBarContentColor)
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SumifyTopBarContentColor)
                     }
                 }
             )

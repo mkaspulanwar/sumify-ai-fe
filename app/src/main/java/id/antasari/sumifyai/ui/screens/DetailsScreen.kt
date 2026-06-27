@@ -21,7 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -46,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -58,7 +57,6 @@ import id.antasari.sumifyai.ui.theme.AccentPurple
 import id.antasari.sumifyai.ui.components.SumifyTopAppBar
 import id.antasari.sumifyai.ui.components.SumifyTopBarContentColor
 import id.antasari.sumifyai.ui.theme.PrimaryIndigo
-import id.antasari.sumifyai.ui.theme.SecondaryTeal
 import id.antasari.sumifyai.ui.theme.SurfaceLightCard
 import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
@@ -99,7 +97,7 @@ fun DetailsScreen(
                 title = { Text("Summary Details", color = SumifyTopBarContentColor, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = SumifyTopBarContentColor)
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SumifyTopBarContentColor)
                     }
                 },
                 actions = {

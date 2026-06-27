@@ -27,7 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -61,10 +61,6 @@ import id.antasari.sumifyai.ui.theme.BackgroundLight
 import id.antasari.sumifyai.ui.theme.BorderLight
 import id.antasari.sumifyai.ui.theme.ColorCompleted
 import id.antasari.sumifyai.ui.theme.ColorFailed
-import id.antasari.sumifyai.ui.theme.ColorGeneratingPdf
-import id.antasari.sumifyai.ui.theme.ColorQueued
-import id.antasari.sumifyai.ui.theme.ColorSummarizing
-import id.antasari.sumifyai.ui.theme.ColorTranscribing
 import id.antasari.sumifyai.ui.theme.PrimaryIndigo
 import id.antasari.sumifyai.ui.theme.SurfaceLight
 import id.antasari.sumifyai.ui.theme.TextMuted
@@ -145,7 +141,7 @@ fun StatusProgressScreen(
                 title = { Text("Processing Status", color = SumifyTopBarContentColor, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = SumifyTopBarContentColor)
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SumifyTopBarContentColor)
                     }
                 },
                 actions = {}
