@@ -37,6 +37,8 @@ data class MeetingLocal(
     var downloadUrl: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val localAudioPath: String? = null,
+    val audioFileName: String? = null,
+    val audioFileSizeBytes: Long? = null,
     var transcriptExcerpt: String? = null,
     var summaryText: String? = null,
     var pdfDownloadId: Long? = null,

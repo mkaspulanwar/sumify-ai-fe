@@ -239,7 +239,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 description = description.trim(),
                 language = language,
                 status = "queued",
-                localAudioPath = file.absolutePath
+                localAudioPath = file.absolutePath,
+                audioFileName = _selectedAudioName.value ?: file.name,
+                audioFileSizeBytes = file.length()
             )
 
             LocalHistoryManager.saveOrUpdateMeeting(context, localMeeting)
@@ -317,7 +319,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     description = description.trim(),
                     language = language,
                     status = response.status,
-                    localAudioPath = file.absolutePath
+                    localAudioPath = file.absolutePath,
+                    audioFileName = _selectedAudioName.value ?: file.name,
+                    audioFileSizeBytes = file.length()
                 )
                 
                 LocalHistoryManager.saveOrUpdateMeeting(context, localMeeting)

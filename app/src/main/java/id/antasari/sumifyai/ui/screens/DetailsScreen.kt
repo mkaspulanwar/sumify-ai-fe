@@ -62,6 +62,7 @@ import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
 import id.antasari.sumifyai.ui.viewmodel.MainViewModel
+import java.io.File
 import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,6 +127,26 @@ fun DetailsScreen(
             }
         } else {
             val isCancelled = meeting.status.equals("cancelled", ignoreCase = true)
+            val audioFileInfo = remember(
+                meeting.audioFileName,
+                meeting.audioFileSizeBytes,
+                meeting.localAudioPath
+            ) {
+                if (!meeting.audioFileName.isNullOrBlank() || meeting.audioFileSizeBytes != null) {
+                    AudioFileInfo(
+                        name = meeting.audioFileName ?: "Audio file",
+                        size = meeting.audioFileSizeBytes?.let(::formatFileSize) ?: "-"
+                    )
+                } else {
+                    meeting.localAudioPath?.let { path ->
+                        val file = File(path)
+                        AudioFileInfo(
+                            name = file.name.takeIf { it.isNotBlank() } ?: "Audio file",
+                            size = if (file.exists()) formatFileSize(file.length()) else "File tidak tersedia"
+                        )
+                    }
+                }
+            }
 
             Column(
                 modifier = Modifier
@@ -168,14 +189,13 @@ fun DetailsScreen(
                         
                         Spacer(modifier = Modifier.height(10.dp))
                         
-                        Row {
-                            Box(
-                                modifier = Modifier
-                                    .background(PrimaryIndigo.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text("Language: ${meeting.language.uppercase()}", color = PrimaryIndigo, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                            }
+                        DetailMetadataRow(
+                            label = "Bahasa",
+                            value = meeting.language.toDisplayLanguage()
+                        )
+                        audioFileInfo?.let { info ->
+                            DetailMetadataRow(label = "Nama file", value = info.name)
+                            DetailMetadataRow(label = "Ukuran file", value = info.size)
                         }
                     }
                 }
@@ -337,6 +357,64 @@ fun DetailsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DetailMetadataRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = "$label:",
+            color = TextMuted,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.width(86.dp)
+        )
+        Text(
+            text = value,
+            color = TextPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            lineHeight = 17.sp,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+private data class AudioFileInfo(
+    val name: String,
+    val size: String
+)
+
+private fun String.toDisplayLanguage(): String {
+    return when (lowercase()) {
+        "id" -> "Indonesia"
+        "en" -> "English"
+        "auto" -> "Auto Detect"
+        else -> replaceFirstChar { char ->
+            if (char.isLowerCase()) char.titlecase() else char.toString()
+        }
+    }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    if (bytes <= 0L) return "0 KB"
+
+    val kb = bytes / 1024.0
+    val mb = kb / 1024.0
+
+    return if (mb >= 1.0) {
+        String.format("%.1f MB", mb)
+    } else {
+        String.format("%.0f KB", kb)
     }
 }
 
