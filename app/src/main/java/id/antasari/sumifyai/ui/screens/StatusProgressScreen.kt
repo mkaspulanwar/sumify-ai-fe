@@ -50,7 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -67,7 +66,6 @@ import id.antasari.sumifyai.ui.theme.ColorQueued
 import id.antasari.sumifyai.ui.theme.ColorSummarizing
 import id.antasari.sumifyai.ui.theme.ColorTranscribing
 import id.antasari.sumifyai.ui.theme.PrimaryIndigo
-import id.antasari.sumifyai.ui.theme.SecondaryTeal
 import id.antasari.sumifyai.ui.theme.SurfaceLight
 import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
@@ -274,26 +272,38 @@ fun StatusProgressScreen(
                         onClick = onNavigateToDetails,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
-                            .border(
-                                BorderStroke(
-                                    1.dp,
-                                    Brush.linearGradient(listOf(PrimaryIndigo, SecondaryTeal))
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ),
+                            .height(52.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
+                        border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.28f)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = "View Summary Details",
                             color = PrimaryIndigo,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 14.sp
                         )
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 } else if (isProcessing) {
+                    Button(
+                        onClick = onNavigateBack,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
+                        border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.28f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Run in Background",
+                            color = PrimaryIndigo,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     Button(
                         onClick = { viewModel.cancelMeetingProcessing(meetingId) },
                         modifier = Modifier
@@ -322,21 +332,23 @@ fun StatusProgressScreen(
                     Spacer(modifier = Modifier.height(64.dp))
                 }
 
-                Button(
-                    onClick = onNavigateBack,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
-                    border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.28f)),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = if (showSummaryReady || isCancelled) "Back to Dashboard" else "Run in Background",
-                        color = PrimaryIndigo,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                if (!isProcessing) {
+                    Button(
+                        onClick = onNavigateBack,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
+                        border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.28f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = if (showSummaryReady || isCancelled) "Back to Dashboard" else "Run in Background",
+                            color = PrimaryIndigo,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

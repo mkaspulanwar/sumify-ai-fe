@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
@@ -475,7 +476,7 @@ fun MeetingHistoryItem(
             "generating_pdf" -> "Generating PDF" to ColorGeneratingPdf
             "completed" -> "Completed" to ColorCompleted
             "failed" -> "Failed" to ColorFailed
-            "cancelled" -> "Cancelled" to ColorQueued
+            "cancelled" -> "Cancelled" to ColorFailed
             else -> meeting.status to ColorQueued
         }
     }
@@ -559,7 +560,11 @@ fun MeetingHistoryItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     ReportSummaryChip(
-                        icon = if (meeting.status.equals("completed", ignoreCase = true)) Icons.Default.Check else Icons.Default.Info,
+                        icon = when {
+                            meeting.status.equals("completed", ignoreCase = true) -> Icons.Default.Check
+                            meeting.status.equals("cancelled", ignoreCase = true) -> Icons.Default.Close
+                            else -> Icons.Default.Info
+                        },
                         text = statusText,
                         contentDescription = "Status $statusText",
                         contentColor = statusColor,

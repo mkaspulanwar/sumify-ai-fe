@@ -127,6 +127,8 @@ fun DetailsScreen(
                 Text("Loading details...", color = TextSecondary)
             }
         } else {
+            val isCancelled = meeting.status.equals("cancelled", ignoreCase = true)
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -301,7 +303,11 @@ fun DetailsScreen(
                             val summary = meeting.summaryText
                             if (summary.isNullOrBlank()) {
                                 Text(
-                                    text = "AI summary content is generating or empty.",
+                                    text = if (isCancelled) {
+                                        "Summary ini telah dibatalkan. Tidak ada AI summary yang dibuat untuk report ini."
+                                    } else {
+                                        "AI summary content is generating or empty."
+                                    },
                                     color = TextMuted,
                                     fontSize = 13.sp
                                 )
@@ -312,7 +318,11 @@ fun DetailsScreen(
                             val transcript = meeting.transcriptExcerpt
                             if (transcript.isNullOrBlank()) {
                                 Text(
-                                    text = "Full transcription is generating or empty.",
+                                    text = if (isCancelled) {
+                                        "Summary ini telah dibatalkan sebelum proses transkripsi selesai."
+                                    } else {
+                                        "Full transcription is generating or empty."
+                                    },
                                     color = TextMuted,
                                     fontSize = 13.sp
                                 )
