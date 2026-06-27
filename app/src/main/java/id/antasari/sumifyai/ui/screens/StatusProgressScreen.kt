@@ -1,12 +1,16 @@
 package id.antasari.sumifyai.ui.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,11 +45,13 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +75,7 @@ import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
 import id.antasari.sumifyai.ui.viewmodel.MainViewModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,6 +113,31 @@ fun StatusProgressScreen(
     val currentStageIndex = remember(currentStatus) {
         val index = stages.indexOfFirst { it.statusId == currentStatus }
         if (index != -1) index else 0
+    }
+    var visualStageIndex by remember(meetingId) { mutableIntStateOf(currentStageIndex) }
+    var isTimelineComplete by remember(meetingId) { mutableStateOf(false) }
+    var showSummaryReady by remember(meetingId) { mutableStateOf(false) }
+
+    LaunchedEffect(currentStatus, currentStageIndex) {
+        if (isCompleted) {
+            showSummaryReady = false
+            isTimelineComplete = false
+
+            val startIndex = visualStageIndex.coerceIn(0, stages.lastIndex)
+            for (index in startIndex until stages.lastIndex) {
+                visualStageIndex = index
+                delay(240)
+            }
+
+            visualStageIndex = stages.lastIndex
+            isTimelineComplete = true
+            delay(220)
+            showSummaryReady = true
+        } else {
+            visualStageIndex = currentStageIndex
+            isTimelineComplete = false
+            showSummaryReady = false
+        }
     }
 
     Scaffold(
@@ -165,25 +197,36 @@ fun StatusProgressScreen(
                     .weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
-                if (isCompleted) {
-                    SummaryReadyIndicator()
-                } else {
-                    stages.forEachIndexed { index, stage ->
-                        val stageState = remember(currentStageIndex, isFailed, currentStatus) {
-                            when {
-                                isFailed && index == currentStageIndex -> StageState.Failed
-                                isFailed && index > currentStageIndex -> StageState.Pending
-                                index < currentStageIndex -> StageState.Completed
-                                index == currentStageIndex -> StageState.Active
-                                else -> StageState.Pending
+                AnimatedContent(
+                    targetState = showSummaryReady,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(180)) togetherWith
+                            fadeOut(animationSpec = tween(120)) using
+                            SizeTransform(clip = false)
+                    },
+                    label = "processing-content"
+                ) { ready ->
+                    if (ready) {
+                        SummaryReadyIndicator()
+                    } else {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            stages.forEachIndexed { index, stage ->
+                                val stageState = when {
+                                    isTimelineComplete -> StageState.Completed
+                                    isFailed && index == visualStageIndex -> StageState.Failed
+                                    isFailed && index > visualStageIndex -> StageState.Pending
+                                    index < visualStageIndex -> StageState.Completed
+                                    index == visualStageIndex -> StageState.Active
+                                    else -> StageState.Pending
+                                }
+
+                                StageItem(
+                                    stage = stage,
+                                    state = stageState,
+                                    isLast = index == stages.lastIndex
+                                )
                             }
                         }
-
-                        StageItem(
-                            stage = stage,
-                            state = stageState,
-                            isLast = index == stages.lastIndex
-                        )
                     }
                 }
             }
@@ -201,7 +244,7 @@ fun StatusProgressScreen(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
-                } else if (!isCompleted) {
+                } else if (!showSummaryReady) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
@@ -223,7 +266,7 @@ fun StatusProgressScreen(
                     }
                 }
 
-                AnimatedVisibility(visible = isCompleted) {
+                AnimatedVisibility(visible = showSummaryReady) {
                     Button(
                         onClick = onNavigateToDetails,
                         modifier = Modifier
@@ -257,7 +300,7 @@ fun StatusProgressScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = if (isCompleted) "Back to Dashboard" else "Run in Background",
+                        text = if (showSummaryReady) "Back to Dashboard" else "Run in Background",
                         color = TextSecondary,
                         fontSize = 14.sp
                     )

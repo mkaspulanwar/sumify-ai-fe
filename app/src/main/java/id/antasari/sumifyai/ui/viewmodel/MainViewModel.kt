@@ -247,7 +247,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             withContext(Dispatchers.Main) {
                 _uploadState.value = UploadState.Success(mockId)
-                clearSelectedFile()
                 onUploadSuccess(mockId)
             }
 
@@ -326,7 +325,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 withContext(Dispatchers.Main) {
                     _uploadState.value = UploadState.Success(response.id)
-                    clearSelectedFile()
                     onUploadSuccess(response.id)
                 }
             } catch (e: Exception) {

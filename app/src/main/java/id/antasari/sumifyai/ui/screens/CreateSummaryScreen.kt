@@ -37,9 +37,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -60,6 +62,7 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -112,6 +115,13 @@ fun CreateSummaryScreen(
     val recordDurationSeconds by viewModel.recordDurationSeconds.collectAsState()
     val uploadState by viewModel.uploadState.collectAsState()
 
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.clearSelectedFile()
+            viewModel.cancelActiveRecording()
+        }
+    }
+
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -135,8 +145,6 @@ fun CreateSummaryScreen(
                 title = { Text("New Summary", color = SumifyTopBarContentColor, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = {
-                        viewModel.clearSelectedFile()
-                        viewModel.cancelActiveRecording()
                         onNavigateBack()
                     }) {
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = SumifyTopBarContentColor)
@@ -304,7 +312,7 @@ fun CreateSummaryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 184.dp)
-                        .clickable { filePickerLauncher.launch("audio/*") }
+                        .clickable(enabled = selectedAudioName == null) { filePickerLauncher.launch("audio/*") }
                         .border(BorderStroke(1.5.dp, PrimaryIndigo.copy(alpha = 0.22f)), shape = RoundedCornerShape(18.dp)),
                     colors = CardDefaults.cardColors(containerColor = SurfaceLightCard),
                     shape = RoundedCornerShape(18.dp),
@@ -369,36 +377,100 @@ fun CreateSummaryScreen(
                                 AudioFormatBadge("WEBM")
                             }
                         } else {
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                                    .padding(horizontal = 2.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "Selected File:",
-                                        fontSize = 11.sp,
-                                        color = PrimaryIndigo,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = selectedAudioName ?: "",
-                                        fontSize = 14.sp,
-                                        color = TextPrimary,
-                                        fontWeight = FontWeight.SemiBold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                
-                                IconButton(
-                                    onClick = { viewModel.clearSelectedFile() },
-                                    modifier = Modifier.background(Color.Red.copy(alpha = 0.08f), CircleShape)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(PrimaryIndigo.copy(alpha = 0.04f), RoundedCornerShape(14.dp))
+                                        .border(
+                                            BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.14f)),
+                                            RoundedCornerShape(14.dp)
+                                        )
+                                        .padding(horizontal = 14.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(imageVector = Icons.Default.Close, contentDescription = "Clear", tint = Color.Red, modifier = Modifier.size(16.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .background(ColorCompleted.copy(alpha = 0.12f), CircleShape)
+                                            .border(BorderStroke(1.dp, ColorCompleted.copy(alpha = 0.28f)), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "File selected",
+                                            tint = ColorCompleted,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Audio file selected",
+                                            fontSize = 11.sp,
+                                            color = ColorCompleted,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Text(
+                                            text = selectedAudioName ?: "",
+                                            fontSize = 14.sp,
+                                            color = TextPrimary,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            lineHeight = 18.sp
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    IconButton(
+                                        onClick = { viewModel.clearSelectedFile() },
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .background(Color.Red.copy(alpha = 0.08f), CircleShape)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Clear selected file",
+                                            tint = Color.Red,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(14.dp))
+
+                                Button(
+                                    onClick = { filePickerLauncher.launch("audio/*") },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(44.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
+                                    border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.35f)),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Change file",
+                                        tint = PrimaryIndigo,
+                                        modifier = Modifier.size(17.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Change File",
+                                        color = PrimaryIndigo,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
                                 }
                             }
                         }
