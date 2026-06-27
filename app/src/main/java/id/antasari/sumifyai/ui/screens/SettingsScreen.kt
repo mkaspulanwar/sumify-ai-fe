@@ -2,10 +2,8 @@ package id.antasari.sumifyai.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,19 +14,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +41,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -75,6 +69,9 @@ fun SettingsScreen(
     val meetings by viewModel.history.collectAsState()
     
     var urlInput by remember { mutableStateOf(apiBaseUrl) }
+    var isTestingConnection by remember { mutableStateOf(false) }
+    var connectionResult by remember { mutableStateOf<String?>(null) }
+    var isConnectionSuccess by remember { mutableStateOf<Boolean?>(null) }
 
     Scaffold(
         containerColor = BackgroundLight,
@@ -204,6 +201,8 @@ fun SettingsScreen(
                         onClick = {
                             if (urlInput.trim().isNotEmpty()) {
                                 viewModel.updateApiBaseUrl(urlInput)
+                                connectionResult = null
+                                isConnectionSuccess = null
                             } else {
                                 Toast.makeText(context, "API URL cannot be empty", Toast.LENGTH_SHORT).show()
                             }
@@ -220,6 +219,53 @@ fun SettingsScreen(
                             text = "Update API Connection",
                             color = if (isDemoMode || urlInput.trim().isEmpty()) TextMuted else Color.White,
                             fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Button(
+                        onClick = {
+                            isTestingConnection = true
+                            connectionResult = null
+                            isConnectionSuccess = null
+                            viewModel.testApiConnection { success, message ->
+                                isTestingConnection = false
+                                isConnectionSuccess = success
+                                connectionResult = message
+                            }
+                        },
+                        enabled = !isDemoMode && !isTestingConnection && urlInput.trim().isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            disabledContainerColor = BorderLight.copy(alpha = 0.3f)
+                        ),
+                        border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.35f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        if (isTestingConnection) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                color = PrimaryIndigo,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(
+                            text = if (isTestingConnection) "Testing..." else "Test API Connection",
+                            color = if (isDemoMode || urlInput.trim().isEmpty()) TextMuted else PrimaryIndigo,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    connectionResult?.let { message ->
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = message,
+                            color = if (isConnectionSuccess == true) PrimaryIndigo else Color.Red,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp
                         )
                     }
                 }
@@ -249,7 +295,7 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             meetings.forEach { viewModel.deleteMeeting(it.id) }
-                            Toast.makeText(context, "Local history purged", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Riwayat dihapus", Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -258,13 +304,13 @@ fun SettingsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Purge",
+                            contentDescription = "Hapus riwayat",
                             tint = Color.Red,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Purge Local History",
+                            text = "Hapus Riwayat",
                             color = Color.Red,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -274,34 +320,60 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Version Info
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Text(
+                text = "App Info",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = PrimaryIndigo,
+                letterSpacing = 0.5.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(BorderStroke(1.dp, BorderLight), RoundedCornerShape(16.dp)),
+                colors = CardDefaults.cardColors(containerColor = SurfaceLightCard),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Version",
-                        tint = TextMuted,
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Sumify AI - Version 1.0.0 (Demo Ready)",
-                        fontSize = 11.sp,
-                        color = TextMuted
-                    )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    SettingsInfoRow(label = "Version", value = "1.0.0")
+                    SettingsInfoRow(label = "Mode", value = if (isDemoMode) "Demo" else "Online")
+                    SettingsInfoRow(label = "Reports", value = meetings.size.toString())
+                    SettingsInfoRow(label = "Endpoint", value = apiBaseUrl)
                 }
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Made with love for Kaspul Anwar",
-                    fontSize = 11.sp,
-                    color = TextMuted
-                )
             }
 
             Spacer(modifier = Modifier.height(40.dp))
         }
+    }
+}
+
+@Composable
+private fun SettingsInfoRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = "$label:",
+            color = TextMuted,
+            fontSize = 12.sp,
+            modifier = Modifier.width(76.dp)
+        )
+        Text(
+            text = value,
+            color = TextPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            lineHeight = 16.sp,
+            modifier = Modifier.weight(1f)
+        )
     }
 }

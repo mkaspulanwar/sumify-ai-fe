@@ -25,10 +25,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.TimeUnit
 import java.util.UUID
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -120,6 +123,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isDemoMode.value = enabled
         val stateText = if (enabled) "Demo Mode (Simulation) active" else "Online Mode active"
         Toast.makeText(context, stateText, Toast.LENGTH_SHORT).show()
+    }
+
+    fun testApiConnection(onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val baseUrl = ApiConfig.getBaseUrl(context)
+            val client = OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
+                .build()
+            val request = Request.Builder()
+                .url(baseUrl)
+                .get()
+                .build()
+
+            val result = try {
+                client.newCall(request).execute().use { response ->
+                    true to "Server terhubung (${response.code})"
+                }
+            } catch (e: Exception) {
+                false to "Tidak bisa terhubung: ${e.localizedMessage ?: "Network error"}"
+            }
+
+            withContext(Dispatchers.Main) {
+                onResult(result.first, result.second)
+            }
+        }
     }
 
     // --- AUDIO RECORDING UTILITIES ---
