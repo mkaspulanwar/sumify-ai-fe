@@ -1,7 +1,6 @@
 package id.antasari.sumifyai.ui.screens
 
 import android.content.Intent
-import android.net.Uri
 import android.text.format.DateFormat
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -27,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.antasari.sumifyai.ui.theme.BackgroundLight
 import id.antasari.sumifyai.ui.theme.BorderLight
-import id.antasari.sumifyai.ui.theme.AccentPurple
 import id.antasari.sumifyai.ui.components.SumifyTopAppBar
 import id.antasari.sumifyai.ui.components.SumifyTopBarContentColor
 import id.antasari.sumifyai.ui.theme.PrimaryIndigo
@@ -122,9 +121,12 @@ fun DetailsScreen(
         }
     ) { innerPadding ->
         if (meeting == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Loading details...", color = TextSecondary)
-            }
+            DetailsLoadingState(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp)
+            )
         } else {
             val isCancelled = meeting.status.equals("cancelled", ignoreCase = true)
             val audioFileInfo = remember(
@@ -237,36 +239,18 @@ fun DetailsScreen(
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                             
-                            Row(
+                            Button(
+                                onClick = { viewModel.downloadPdf(meeting.id, meeting.title, meeting.downloadUrl!!) },
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
+                                shape = RoundedCornerShape(10.dp)
                             ) {
-                                Button(
-                                    onClick = { viewModel.downloadPdf(meeting.id, meeting.title, meeting.downloadUrl!!) },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
-                                    shape = RoundedCornerShape(10.dp)
-                                ) {
-                                    Text(
-                                        if (meeting.pdfFileName.isNullOrBlank()) "Download PDF" else "Download Again",
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp
-                                    )
-                                }
-                                
-                                Button(
-                                    onClick = {
-                                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(meeting.downloadUrl))
-                                        context.startActivity(browserIntent)
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                                    border = BorderStroke(1.dp, AccentPurple),
-                                    shape = RoundedCornerShape(10.dp)
-                                ) {
-                                    Text("Open PDF Link", color = AccentPurple, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                }
+                                Text(
+                                    if (meeting.pdfFileName.isNullOrBlank()) "Download PDF" else "Download Again",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
                             }
                         }
                     }
@@ -355,6 +339,48 @@ fun DetailsScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailsLoadingState(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceLightCard),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            border = BorderStroke(1.dp, BorderLight)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(
+                    color = PrimaryIndigo,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                Text(
+                    text = "Loading summary details",
+                    color = TextPrimary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Preparing report data...",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
             }
         }
     }

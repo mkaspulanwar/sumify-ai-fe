@@ -81,7 +81,6 @@ import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
 import id.antasari.sumifyai.ui.viewmodel.MainViewModel
 import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

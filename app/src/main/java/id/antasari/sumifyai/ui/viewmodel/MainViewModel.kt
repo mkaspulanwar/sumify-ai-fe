@@ -373,14 +373,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startPollingMeetingStatus(meetingId: String) {
         pollingJob?.cancel()
-        if (_activeMeeting.value?.id != meetingId) {
+        val cachedMeeting = _history.value.find { it.id == meetingId }
+        if (cachedMeeting != null) {
+            _activeMeeting.value = cachedMeeting
+        } else if (_activeMeeting.value?.id != meetingId) {
             _activeMeeting.value = null
         }
         
         viewModelScope.launch(Dispatchers.IO) {
             val list = LocalHistoryManager.loadHistory(context)
             val existing = list.find { it.id == meetingId }
-            _activeMeeting.value = existing
+            if (existing != null) {
+                _activeMeeting.value = existing
+            }
         }
 
         if (meetingId.startsWith("mock_")) {
