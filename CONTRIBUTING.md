@@ -24,14 +24,42 @@ refactor/history-manager
 ```
 
 ## Commit Message
-Gunakan pesan commit yang jelas dan spesifik.
+Gunakan konsep **Semantic Commit Message** agar riwayat perubahan lebih mudah dibaca dan dipahami.
+
+Format:
+```text
+type(scope): subject
+```
+
+Keterangan:
+- `type` menjelaskan jenis perubahan.
+- `scope` bersifat opsional dan menjelaskan area yang diubah.
+- `subject` berisi ringkasan singkat perubahan dalam bentuk imperative atau deskriptif.
+
+### Type yang Disarankan
+| Type | Fungsi |
+| --- | --- |
+| `feat` | Menambahkan fitur baru. |
+| `fix` | Memperbaiki bug. |
+| `docs` | Mengubah dokumentasi. |
+| `style` | Mengubah format kode tanpa mengubah logic. |
+| `refactor` | Merapikan struktur kode tanpa mengubah perilaku. |
+| `test` | Menambah atau memperbaiki test. |
+| `chore` | Perubahan pendukung seperti konfigurasi, dependency, atau tooling. |
+| `build` | Perubahan pada sistem build atau dependency build. |
+| `ci` | Perubahan pada konfigurasi CI/CD. |
+| `perf` | Perubahan untuk meningkatkan performa. |
 
 Contoh:
 ```text
-Add validation for empty upload title
-Fix meeting status polling after upload
-Update README contribution guide
+feat(upload): add validation for empty title
+fix(polling): stop polling after meeting completed
+docs(readme): update contribution guide
+refactor(history): simplify local history update flow
+chore(deps): update compose dependencies
 ```
+
+Gunakan subject yang singkat, jelas, dan tidak diakhiri titik.
 
 ## Standar Kode
 - Ikuti struktur package yang sudah ada.

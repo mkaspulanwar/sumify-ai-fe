@@ -273,6 +273,7 @@ Kontribusi terbuka untuk perbaikan fitur, bugfix, dan dokumentasi. Panduan lengk
 ### Panduan Singkat
 - Ikuti struktur kode yang sudah ada.
 - Hindari perubahan yang tidak terkait dengan task.
+- Gunakan format semantic commit message seperti `feat(upload): add validation for empty title`.
 - Sertakan penjelasan singkat pada Pull Request.
 - Jika ada perubahan perilaku, tambahkan dokumentasi seperlunya.
 
