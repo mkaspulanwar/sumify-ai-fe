@@ -37,11 +37,11 @@ Project ini merupakan repository untuk aplikasi Android atau tampilan user Sumif
 [![Backend Repository](https://img.shields.io/badge/Backend%20Repository-sumify--ai-181717?style=for-the-badge&logo=github)](https://github.com/AndriRahmadani12/sumify-ai)
 
 ## Tim
-| Nama | Role | GitHub |
-| --- | --- | --- |
-| M. Kaspul Anwar | Android Developer | [![GitHub](https://img.shields.io/badge/mkaspulanwar-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/mkaspulanwar) |
-| Andri Rahmadani | Backend Developer | [![GitHub](https://img.shields.io/badge/AndriRahmadani12-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AndriRahmadani12) |
-| Henny Kartika | Contributor | [![GitHub](https://img.shields.io/badge/hennykartika-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/hennykartika) |
+| Nama | GitHub |
+| --- | --- |
+| M. Kaspul Anwar | [![GitHub](https://img.shields.io/badge/mkaspulanwar-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/mkaspulanwar) |
+| Andri Rahmadani | [![GitHub](https://img.shields.io/badge/AndriRahmadani12-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AndriRahmadani12) |
+| Henny Kartika | [![GitHub](https://img.shields.io/badge/hennykartika-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/hennykartika) |
 
 ## Deskripsi
 Sumify AI adalah aplikasi Android untuk merekam atau mengunggah audio rapat, lalu memprosesnya menjadi ringkasan, transkrip, dan file PDF hasil pemrosesan. Aplikasi ini mendukung mode demo untuk simulasi alur kerja tanpa backend aktif, serta mode online untuk terhubung ke API eksternal.
