@@ -26,6 +26,8 @@
 - [Permission](#permission)
 - [Prasyarat](#prasyarat)
 - [Build](#build)
+- [Repository Terkait](#repository-terkait)
+- [Tim](#tim)
 - [Cara Fork dan Copy Project](#cara-fork-dan-copy-project)
 - [Kontribusi](#kontribusi)
 - [Lisensi](#lisensi)
@@ -161,6 +163,18 @@ Jalankan dari Android Studio atau via Gradle:
 ```bash
 ./gradlew assembleDebug
 ```
+
+## Repository Terkait
+Project ini merupakan repository untuk aplikasi Android atau tampilan user Sumify AI.
+
+Backend Sumify AI berada di repository terpisah:
+- [sumify-ai Backend](https://github.com/AndriRahmadani12/sumify-ai)
+
+## Tim
+Project ini dikembangkan oleh:
+- [M. Kaspul Anwar](https://github.com/mkaspulanwar)
+- [Andri Rahmadani](https://github.com/AndriRahmadani12)
+- [Henny Kartika](https://github.com/hennykartika)
 
 ## Cara Fork dan Copy Project
 ### Fork
