@@ -31,7 +31,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import id.antasari.sumifyai.ui.theme.BackgroundLight
 import id.antasari.sumifyai.ui.theme.BorderLight
 import id.antasari.sumifyai.ui.components.SumifyTopAppBar
@@ -49,17 +49,17 @@ import id.antasari.sumifyai.ui.theme.SurfaceLightCard
 import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
-import id.antasari.sumifyai.ui.viewmodel.MainViewModel
+import id.antasari.sumifyai.ui.viewmodel.DashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: MainViewModel,
+    viewModel: DashboardViewModel,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val isDemoMode by viewModel.isDemoMode.collectAsState()
-    val meetings by viewModel.history.collectAsState()
+    val isDemoMode by viewModel.isDemoMode.collectAsStateWithLifecycle()
+    val meetings by viewModel.history.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = BackgroundLight,
@@ -160,7 +160,7 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Button(
                         onClick = {
-                            meetings.forEach { viewModel.deleteMeeting(it.id) }
+                            viewModel.deleteAllMeetings()
                             Toast.makeText(context, "Riwayat dihapus", Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.fillMaxWidth(),

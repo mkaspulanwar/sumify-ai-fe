@@ -15,7 +15,10 @@ import id.antasari.sumifyai.ui.screens.FavoriteSummariesScreen
 import id.antasari.sumifyai.ui.screens.SettingsScreen
 import id.antasari.sumifyai.ui.screens.StatusProgressScreen
 import id.antasari.sumifyai.ui.screens.WelcomeScreen
-import id.antasari.sumifyai.ui.viewmodel.MainViewModel
+import id.antasari.sumifyai.ui.viewmodel.CreateSummaryViewModel
+import id.antasari.sumifyai.ui.viewmodel.DashboardViewModel
+import id.antasari.sumifyai.ui.viewmodel.MeetingViewModel
+import id.antasari.sumifyai.ui.viewmodel.OnboardingViewModel
 
 object Routes {
     const val WELCOME = "welcome"
@@ -33,7 +36,10 @@ object Routes {
 @Composable
 fun AppNavigation(
     navController: NavHostController,
-    viewModel: MainViewModel,
+    onboardingViewModel: OnboardingViewModel,
+    dashboardViewModel: DashboardViewModel,
+    createSummaryViewModel: CreateSummaryViewModel,
+    meetingViewModel: MeetingViewModel,
     startDestination: String = Routes.WELCOME
 ) {
     NavHost(
@@ -47,7 +53,7 @@ fun AppNavigation(
         composable(Routes.WELCOME) {
             WelcomeScreen(
                 onNavigateToDashboard = {
-                    viewModel.completeWelcome {
+                    onboardingViewModel.completeWelcome {
                         navController.navigate(Routes.DASHBOARD) {
                             popUpTo(Routes.WELCOME) { inclusive = true }
                         }
@@ -58,51 +64,45 @@ fun AppNavigation(
 
         composable(Routes.DASHBOARD) {
             DashboardScreen(
-                viewModel = viewModel,
-                onNavigateToCreate = {
-                    navController.navigate(Routes.CREATE_SUMMARY)
-                },
-                onNavigateToSettings = {
-                    navController.navigate(Routes.SETTINGS)
-                },
+                viewModel = dashboardViewModel,
+                onNavigateToCreate = { navController.navigate(Routes.CREATE_SUMMARY) },
+                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                 onNavigateToFavorites = {
                     navController.navigate(Routes.FAVORITE_SUMMARIES)
                 },
                 onNavigateToDetails = { meetingId, status ->
-                    if (status.isFinalReportStatus()) {
-                        navController.navigate(Routes.details(meetingId))
+                    val route = if (status.isFinalReportStatus()) {
+                        Routes.details(meetingId)
                     } else {
-                        navController.navigate(Routes.statusProgress(meetingId))
+                        Routes.statusProgress(meetingId)
                     }
+                    navController.navigate(route)
                 }
             )
         }
 
         composable(Routes.FAVORITE_SUMMARIES) {
             FavoriteSummariesScreen(
-                viewModel = viewModel,
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
+                viewModel = dashboardViewModel,
+                onNavigateBack = { navController.popBackStack() },
                 onNavigateToDetails = { meetingId, status ->
-                    if (status.isFinalReportStatus()) {
-                        navController.navigate(Routes.details(meetingId))
+                    val route = if (status.isFinalReportStatus()) {
+                        Routes.details(meetingId)
                     } else {
-                        navController.navigate(Routes.statusProgress(meetingId))
+                        Routes.statusProgress(meetingId)
                     }
+                    navController.navigate(route)
                 }
             )
         }
 
         composable(Routes.CREATE_SUMMARY) {
             CreateSummaryScreen(
-                viewModel = viewModel,
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
+                viewModel = createSummaryViewModel,
+                onNavigateBack = { navController.popBackStack() },
                 onUploadSuccess = { meetingId ->
                     navController.navigate(Routes.statusProgress(meetingId)) {
-                        popUpTo(Routes.DASHBOARD) // Pop the create screen so back goes to dashboard
+                        popUpTo(Routes.DASHBOARD)
                     }
                 }
             )
@@ -110,10 +110,8 @@ fun AppNavigation(
 
         composable(Routes.SETTINGS) {
             SettingsScreen(
-                viewModel = viewModel,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                viewModel = dashboardViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -124,10 +122,10 @@ fun AppNavigation(
             val meetingId = backStackEntry.arguments?.getString("meetingId") ?: ""
             StatusProgressScreen(
                 meetingId = meetingId,
-                viewModel = viewModel,
+                viewModel = meetingViewModel,
                 onNavigateToDetails = {
                     navController.navigate(Routes.details(meetingId)) {
-                        popUpTo(Routes.DASHBOARD) // Back goes to dashboard
+                        popUpTo(Routes.DASHBOARD)
                     }
                 },
                 onNavigateBack = {
@@ -143,17 +141,14 @@ fun AppNavigation(
             val meetingId = backStackEntry.arguments?.getString("meetingId") ?: ""
             DetailsScreen(
                 meetingId = meetingId,
-                viewModel = viewModel,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                viewModel = meetingViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
 }
 
-private fun String.isFinalReportStatus(): Boolean {
-    return equals("completed", ignoreCase = true) ||
+private fun String.isFinalReportStatus(): Boolean =
+    equals("completed", ignoreCase = true) ||
         equals("failed", ignoreCase = true) ||
         equals("cancelled", ignoreCase = true)
-}

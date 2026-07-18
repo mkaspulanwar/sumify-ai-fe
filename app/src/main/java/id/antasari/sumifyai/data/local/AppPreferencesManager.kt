@@ -14,13 +14,24 @@ class AppPreferencesManager(private val context: Context) {
         preferences[HAS_SEEN_WELCOME] ?: false
     }
 
+    val isDemoMode: Flow<Boolean> = context.appPreferencesDataStore.data.map { preferences ->
+        preferences[IS_DEMO_MODE] ?: false
+    }
+
     suspend fun setHasSeenWelcome(value: Boolean) {
         context.appPreferencesDataStore.edit { preferences ->
             preferences[HAS_SEEN_WELCOME] = value
         }
     }
 
+    suspend fun setDemoMode(value: Boolean) {
+        context.appPreferencesDataStore.edit { preferences ->
+            preferences[IS_DEMO_MODE] = value
+        }
+    }
+
     private companion object {
         val HAS_SEEN_WELCOME = booleanPreferencesKey("has_seen_welcome")
+        val IS_DEMO_MODE = booleanPreferencesKey("demo_mode_active")
     }
 }

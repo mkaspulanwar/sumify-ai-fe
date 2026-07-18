@@ -45,7 +45,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,7 +59,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import id.antasari.sumifyai.data.model.MeetingLocal
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import id.antasari.sumifyai.domain.model.Meeting
 import id.antasari.sumifyai.ui.components.BrandLogo
 import id.antasari.sumifyai.ui.components.SumifyTopAppBar
 import id.antasari.sumifyai.ui.components.SumifyTopBarContentColor
@@ -79,7 +79,7 @@ import id.antasari.sumifyai.ui.theme.SurfaceLightCard
 import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
-import id.antasari.sumifyai.ui.viewmodel.MainViewModel
+import id.antasari.sumifyai.ui.viewmodel.DashboardViewModel
 import java.util.Date
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -87,17 +87,17 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    viewModel: MainViewModel,
+    viewModel: DashboardViewModel,
     onNavigateToCreate: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToFavorites: () -> Unit,
     onNavigateToDetails: (String, String) -> Unit
 ) {
-    val meetings by viewModel.history.collectAsState()
-    val isDemoMode by viewModel.isDemoMode.collectAsState()
+    val meetings by viewModel.history.collectAsStateWithLifecycle()
+    val isDemoMode by viewModel.isDemoMode.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
     var isRefreshing by remember { mutableStateOf(false) }
-    var meetingPendingDelete by remember { mutableStateOf<MeetingLocal?>(null) }
+    var meetingPendingDelete by remember { mutableStateOf<Meeting?>(null) }
     val pullToRefreshState = rememberPullToRefreshState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -457,7 +457,7 @@ fun DashboardScreen(
 
 @Composable
 fun MeetingHistoryItem(
-    meeting: MeetingLocal,
+    meeting: Meeting,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDelete: () -> Unit

@@ -41,7 +41,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import id.antasari.sumifyai.ui.components.SumifyTopAppBar
 import id.antasari.sumifyai.ui.components.SumifyTopBarContentColor
 import id.antasari.sumifyai.ui.theme.BackgroundLight
@@ -66,18 +66,18 @@ import id.antasari.sumifyai.ui.theme.SurfaceLight
 import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
-import id.antasari.sumifyai.ui.viewmodel.MainViewModel
+import id.antasari.sumifyai.ui.viewmodel.MeetingViewModel
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatusProgressScreen(
     meetingId: String,
-    viewModel: MainViewModel,
+    viewModel: MeetingViewModel,
     onNavigateToDetails: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    val activeMeeting by viewModel.activeMeeting.collectAsState()
+    val activeMeeting by viewModel.activeMeeting.collectAsStateWithLifecycle()
 
     LaunchedEffect(meetingId) {
         viewModel.startPollingMeetingStatus(meetingId)

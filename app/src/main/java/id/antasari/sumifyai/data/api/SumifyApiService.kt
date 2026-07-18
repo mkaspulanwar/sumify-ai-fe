@@ -1,7 +1,7 @@
 package id.antasari.sumifyai.data.api
 
-import id.antasari.sumifyai.data.model.MeetingCreateResponse
-import id.antasari.sumifyai.data.model.MeetingDetailResponse
+import id.antasari.sumifyai.data.model.remote.MeetingCreateResponse
+import id.antasari.sumifyai.data.model.remote.MeetingDetailResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.GET

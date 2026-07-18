@@ -3,7 +3,7 @@ package id.antasari.sumifyai.data.local
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import id.antasari.sumifyai.data.model.MeetingLocal
+import id.antasari.sumifyai.domain.model.Meeting
 import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
@@ -19,14 +19,14 @@ object LocalHistoryManager {
     /**
      * Loads the list of saved meetings from local storage.
      */
-    fun loadHistory(context: Context): List<MeetingLocal> {
+    fun loadHistory(context: Context): List<Meeting> {
         val file = getFile(context)
         if (!file.exists()) {
             return emptyList()
         }
         return try {
             FileReader(file).use { reader ->
-                val type = object : TypeToken<List<MeetingLocal>>() {}.type
+                val type = object : TypeToken<List<Meeting>>() {}.type
                 gson.fromJson(reader, type) ?: emptyList()
             }
         } catch (e: Exception) {
@@ -38,7 +38,7 @@ object LocalHistoryManager {
     /**
      * Saves the list of meetings to local storage.
      */
-    fun saveHistory(context: Context, meetings: List<MeetingLocal>) {
+    fun saveHistory(context: Context, meetings: List<Meeting>) {
         val file = getFile(context)
         try {
             FileWriter(file).use { writer ->
@@ -52,7 +52,7 @@ object LocalHistoryManager {
     /**
      * Adds a new meeting to the history. If a meeting with the same ID already exists, it is updated.
      */
-    fun saveOrUpdateMeeting(context: Context, meeting: MeetingLocal) {
+    fun saveOrUpdateMeeting(context: Context, meeting: Meeting) {
         val currentHistory = loadHistory(context).toMutableList()
         val index = currentHistory.indexOfFirst { it.id == meeting.id }
         if (index != -1) {

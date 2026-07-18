@@ -2,6 +2,7 @@ package id.antasari.sumifyai.ui.screens
 
 import android.content.Intent
 import android.text.format.DateFormat
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,7 +39,6 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import id.antasari.sumifyai.ui.theme.BackgroundLight
 import id.antasari.sumifyai.ui.theme.BorderLight
 import id.antasari.sumifyai.ui.components.SumifyTopAppBar
@@ -60,7 +61,7 @@ import id.antasari.sumifyai.ui.theme.SurfaceLightCard
 import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
-import id.antasari.sumifyai.ui.viewmodel.MainViewModel
+import id.antasari.sumifyai.ui.viewmodel.MeetingViewModel
 import java.io.File
 import java.util.Date
 
@@ -68,13 +69,21 @@ import java.util.Date
 @Composable
 fun DetailsScreen(
     meetingId: String,
-    viewModel: MainViewModel,
+    viewModel: MeetingViewModel,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val activeMeeting by viewModel.activeMeeting.collectAsState()
+    val activeMeeting by viewModel.activeMeeting.collectAsStateWithLifecycle()
+    val message by viewModel.message.collectAsStateWithLifecycle()
 
     var selectedTabIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(message) {
+        message?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.consumeMessage()
+        }
+    }
 
     LaunchedEffect(meetingId) {
         viewModel.startPollingMeetingStatus(meetingId)

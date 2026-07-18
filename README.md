@@ -71,48 +71,58 @@ Project ini adalah client mobile untuk workflow pembuatan meeting summary. Fokus
 - Konfigurasi endpoint FastAPI berdasarkan build environment
 
 ## Arsitektur
-Proyek ini memakai pola **Single-Activity + Jetpack Compose + MVVM**.
+Proyek ini memakai pola **Single-Activity + Jetpack Compose + MVVM** dengan
+repository sebagai batas data layer dan manual dependency injection melalui
+application container.
 
 Alur utamanya:
 1. `MainActivity` menjadi entry point tunggal.
-2. `MainViewModel` memegang state aplikasi, upload, recording, polling, dan preferensi.
-3. `Navigation` mengatur perpindahan antar screen.
-4. Layer data menangani:
-   - `ApiConfig` untuk Retrofit client
-   - `SumifyApiService` untuk endpoint backend
-   - `LocalHistoryManager` untuk riwayat lokal berbasis JSON file
-   - `AppPreferencesManager` untuk DataStore preferences
-5. UI Compose membaca state dari ViewModel dan menampilkan screen sesuai kondisi.
+2. `SumifyApplication` membuat `AppContainer` sebagai composition root.
+3. `AppContainer` menyediakan repository, audio input manager, dan PDF downloader.
+4. ViewModel per fitur memegang UI state dan meneruskan operasi data ke repository.
+5. `MeetingRepository` mengoordinasikan API, penyimpanan JSON, dan DataStore.
+6. UI membaca `StateFlow` dengan `collectAsStateWithLifecycle`.
 
 ### Layer Aplikasi
 | Layer | Komponen | Tanggung Jawab |
 | --- | --- | --- |
-| Entry Point | `MainActivity` | Menginisialisasi theme, navigation controller, dan menentukan start destination berdasarkan status welcome. |
-| Presentation | `ui/screens`, `ui/components`, `ui/theme` | Menampilkan UI berbasis Jetpack Compose, menerima event user, dan membaca state dari ViewModel. |
-| Navigation | `ui/navigation/Navigation.kt` | Mengatur route antar halaman seperti welcome, dashboard, create summary, status progress, details, favorites, dan settings. |
-| State Holder | `ui/viewmodel/MainViewModel.kt` | Mengelola state aplikasi, recording, upload, polling status, history, favorite, download PDF, dan demo mode. |
-| Data API | `data/api` | Menyediakan Retrofit service untuk komunikasi dengan backend FastAPI menggunakan konfigurasi build. |
-| Data Local | `data/local` | Menyimpan preferensi onboarding, demo mode, dan riwayat meeting lokal. |
-| Model | `data/model` | Mendefinisikan response API dan model lokal meeting. |
-| Utility | `utils/AudioRecorder.kt` | Menangani perekaman audio dari mikrofon perangkat. |
+| Application | `SumifyApplication`, `AppContainer` | Membuat dan membagikan dependency aplikasi. |
+| Entry Point | `MainActivity` | Menginisialisasi theme, ViewModel, navigation, dan start destination. |
+| Presentation | `ui/screens`, `ui/components`, `ui/theme` | Menampilkan UI Compose dan mengirim event pengguna. |
+| Navigation | `ui/navigation` | Mengatur route dan perpindahan antar-screen. |
+| State Holder | `ui/viewmodel` | Memisahkan state onboarding, dashboard/settings, create summary, dan meeting. |
+| Repository | `data/repository` | Menjadi entry point data bagi ViewModel. |
+| Data Source | `data/source` | Adapter untuk Retrofit, JSON history, dan DataStore. |
+| Platform Data | `data/audio`, `data/download` | Membungkus audio input dan Android DownloadManager. |
+| Remote Model | `data/model/remote` | DTO yang mengikuti kontrak backend. |
+| Domain Model | `domain/model` | Model aplikasi yang digunakan repository dan UI. |
 
 ### Komponen Utama
-- `app/src/main/java/id/antasari/sumifyai/MainActivity.kt`
-- `app/src/main/java/id/antasari/sumifyai/ui/viewmodel/MainViewModel.kt`
+- `app/src/main/java/id/antasari/sumifyai/AppContainer.kt`
+- `app/src/main/java/id/antasari/sumifyai/data/repository/MeetingRepository.kt`
+- `app/src/main/java/id/antasari/sumifyai/data/repository/DefaultMeetingRepository.kt`
+- `app/src/main/java/id/antasari/sumifyai/ui/viewmodel/OnboardingViewModel.kt`
+- `app/src/main/java/id/antasari/sumifyai/ui/viewmodel/DashboardViewModel.kt`
+- `app/src/main/java/id/antasari/sumifyai/ui/viewmodel/CreateSummaryViewModel.kt`
+- `app/src/main/java/id/antasari/sumifyai/ui/viewmodel/MeetingViewModel.kt`
 - `app/src/main/java/id/antasari/sumifyai/ui/navigation/Navigation.kt`
-- `app/src/main/java/id/antasari/sumifyai/data/api/ApiConfig.kt`
-- `app/src/main/java/id/antasari/sumifyai/data/api/SumifyApiService.kt`
-- `app/src/main/java/id/antasari/sumifyai/data/local/LocalHistoryManager.kt`
-- `app/src/main/java/id/antasari/sumifyai/data/local/AppPreferencesManager.kt`
 
 ## Struktur Proyek
 ```text
 app/
   src/main/java/id/antasari/sumifyai/
+    SumifyApplication.kt
+    AppContainer.kt
     MainActivity.kt
     data/
       api/
+      audio/
+      download/
       local/
+      model/remote/
+      repository/
+      source/
+    domain/
       model/
     ui/
       components/
@@ -121,7 +131,9 @@ app/
       theme/
       viewmodel/
     utils/
-commonMain/
+  src/test/
+    data/repository/
+    ui/viewmodel/
 docs/architecture/
 ```
 
@@ -129,29 +141,25 @@ docs/architecture/
 | Folder / File | Deskripsi |
 | --- | --- |
 | `app/` | Modul utama aplikasi Android. |
-| `app/build.gradle.kts` | Konfigurasi build aplikasi, plugin Android, Kotlin, Compose, SDK, dan dependency. |
-| `app/src/main/AndroidManifest.xml` | Deklarasi permission, activity utama, icon, theme, dan konfigurasi aplikasi. |
-| `app/src/main/java/id/antasari/sumifyai/` | Source code utama aplikasi. |
-| `app/src/main/res/` | Resource Android seperti drawable, icon launcher, warna, string, theme, backup rules, dan XML lain. |
-| `commonMain/` | Kode tambahan untuk komponen Compose Material pull-to-refresh. |
-| `docs/architecture/` | Dokumentasi visual berupa diagram arsitektur dan sequence diagram. |
-| `gradle/libs.versions.toml` | Version catalog untuk mengelola versi plugin dan library. |
-| `gradle/wrapper/` | Gradle Wrapper agar build dapat dijalankan dengan versi Gradle yang konsisten. |
-| `.github/` | Template GitHub untuk issue dan pull request. |
+| `app/src/main/java/` | Source aplikasi yang dipisahkan menjadi data, domain, dan UI. |
+| `app/src/main/res/` | Resource Android seperti drawable, icon, string, dan theme. |
+| `app/src/test/` | Unit test repository dan ViewModel. |
+| `docs/architecture/` | Diagram arsitektur dan sequence diagram. |
+| `gradle/libs.versions.toml` | Version catalog plugin dan library. |
 
 ### Penjelasan Package
-| Package | Isi | Fungsi |
-| --- | --- | --- |
-| `id.antasari.sumifyai` | `MainActivity` | Entry point aplikasi Android. |
-| `id.antasari.sumifyai.data.api` | `ApiConfig`, `SumifyApiService` | Konfigurasi Retrofit dan definisi endpoint backend. |
-| `id.antasari.sumifyai.data.local` | `LocalHistoryManager`, `AppPreferencesManager` | Penyimpanan data lokal, riwayat meeting, dan preferensi aplikasi. |
-| `id.antasari.sumifyai.data.model` | `MeetingModels` | Model response API dan model lokal. |
-| `id.antasari.sumifyai.ui.components` | Komponen UI reusable | Komponen seperti brand logo dan top app bar. |
-| `id.antasari.sumifyai.ui.navigation` | `Navigation`, `Routes` | Definisi route dan graph navigasi Compose. |
-| `id.antasari.sumifyai.ui.screens` | Screen Compose | Halaman welcome, dashboard, create summary, status progress, details, favorites, dan settings. |
-| `id.antasari.sumifyai.ui.theme` | Theme, color, typography | Konfigurasi tampilan visual Material 3. |
-| `id.antasari.sumifyai.ui.viewmodel` | `MainViewModel`, `UploadState` | State management dan business flow aplikasi. |
-| `id.antasari.sumifyai.utils` | `AudioRecorder` | Utility perekaman audio. |
+| Package | Fungsi |
+| --- | --- |
+| `id.antasari.sumifyai` | Application container dan entry point aplikasi. |
+| `id.antasari.sumifyai.data.api` | Konfigurasi Retrofit dan endpoint backend. |
+| `id.antasari.sumifyai.data.audio` | Perekaman dan penyalinan file audio ke cache. |
+| `id.antasari.sumifyai.data.download` | Integrasi Android DownloadManager. |
+| `id.antasari.sumifyai.data.local` | Implementasi penyimpanan JSON dan DataStore. |
+| `id.antasari.sumifyai.data.model.remote` | DTO response API. |
+| `id.antasari.sumifyai.data.repository` | Koordinasi remote, local, preference, dan demo workflow. |
+| `id.antasari.sumifyai.data.source` | Kontrak serta adapter data source. |
+| `id.antasari.sumifyai.domain.model` | Model `Meeting` yang dipakai aplikasi. |
+| `id.antasari.sumifyai.ui.*` | Navigation, screen, komponen, theme, dan ViewModel per fitur. |
 
 ## Diagram Arsitektur
 | Diagram | Preview | Deskripsi |
@@ -171,17 +179,19 @@ docs/architecture/
 8. Buka detail meeting untuk melihat summary, transcript, dan PDF.
 
 ### Konfigurasi Backend
-- Buka `Settings`.
-- Ubah base URL API sesuai server yang dipakai.
-- Jalankan `Test Connection` untuk memastikan backend aktif.
-- Gunakan mode demo jika ingin simulasi tanpa backend.
+- Endpoint backend dikonfigurasi melalui Gradle property atau environment variable.
+- Build debug memakai `http://10.0.2.2:8000/` secara default untuk Android Emulator.
+- Build release wajib memakai endpoint HTTPS.
+- Mode demo dapat diaktifkan dari `Settings` untuk menjalankan simulasi tanpa backend.
 
 ### Referensi File Penting
 - `app/src/main/java/id/antasari/sumifyai/MainActivity.kt`
+- `app/src/main/java/id/antasari/sumifyai/AppContainer.kt`
 - `app/src/main/java/id/antasari/sumifyai/ui/navigation/Navigation.kt`
-- `app/src/main/java/id/antasari/sumifyai/ui/viewmodel/MainViewModel.kt`
+- `app/src/main/java/id/antasari/sumifyai/data/repository/DefaultMeetingRepository.kt`
+- `app/src/main/java/id/antasari/sumifyai/ui/viewmodel/CreateSummaryViewModel.kt`
+- `app/src/main/java/id/antasari/sumifyai/ui/viewmodel/MeetingViewModel.kt`
 - `app/src/main/java/id/antasari/sumifyai/data/api/ApiConfig.kt`
-- `app/src/main/java/id/antasari/sumifyai/data/local/LocalHistoryManager.kt`
 
 ## Tech Stack
 | Teknologi | Versi | Penggunaan |
@@ -194,6 +204,7 @@ docs/architecture/
 | Activity Compose | `1.12.2` | Integrasi Compose dengan Android Activity. |
 | Navigation Compose | `2.8.5` | Navigasi antar screen Compose. |
 | Lifecycle Runtime KTX | `2.10.0` | Lifecycle-aware coroutine dan utilitas AndroidX. |
+| Lifecycle Runtime Compose | `2.10.0` | Pengumpulan Flow secara lifecycle-aware di Compose. |
 | Lifecycle ViewModel Compose | `2.8.7` | Integrasi ViewModel dengan Compose. |
 | DataStore Preferences | `1.1.1` | Penyimpanan preferensi seperti status welcome. |
 | Retrofit | `2.11.0` | HTTP client untuk komunikasi dengan backend API. |
@@ -201,6 +212,7 @@ docs/architecture/
 | OkHttp Logging Interceptor | `4.12.0` | Logging request dan response HTTP saat debugging. |
 | Gson | `2.11.0` | Serialisasi dan deserialisasi JSON, termasuk history lokal. |
 | JUnit | `4.13.2` | Unit testing. |
+| Kotlin Coroutines Test | `1.9.0` | Test coroutine dan ViewModel secara deterministik. |
 | AndroidX JUnit | `1.3.0` | Instrumentation testing Android. |
 | Espresso | `3.7.0` | UI testing Android. |
 
@@ -214,12 +226,27 @@ docs/architecture/
 | Compose Tooling Preview | `androidx.compose.ui:ui-tooling-preview` | Preview composable di Android Studio. |
 | Compose Material 3 | `androidx.compose.material3:material3` | Komponen UI Material 3. |
 | Navigation Compose | `androidx.navigation:navigation-compose` | Navigasi deklaratif antar screen. |
+| Lifecycle Runtime Compose | `androidx.lifecycle:lifecycle-runtime-compose` | Menyediakan `collectAsStateWithLifecycle`. |
 | Lifecycle ViewModel Compose | `androidx.lifecycle:lifecycle-viewmodel-compose` | Menghubungkan ViewModel dengan composable. |
 | DataStore Preferences | `androidx.datastore:datastore-preferences` | Penyimpanan key-value modern berbasis coroutine Flow. |
 | Retrofit | `com.squareup.retrofit2:retrofit` | Membuat HTTP API service. |
 | Retrofit Gson Converter | `com.squareup.retrofit2:converter-gson` | Parsing JSON response dari backend. |
 | OkHttp Logging | `com.squareup.okhttp3:logging-interceptor` | Debugging request dan response API. |
 | Gson | `com.google.code.gson:gson` | Mengelola JSON lokal dan model API. |
+| Coroutines Test | `org.jetbrains.kotlinx:kotlinx-coroutines-test` | Test repository dan state holder berbasis coroutine. |
+
+### Testing
+Unit test saat ini mencakup:
+- publikasi history lokal melalui repository
+- upload mode demo tanpa memanggil remote data source
+- perubahan status favorite
+- state onboarding dan callback setelah welcome selesai
+
+Jalankan unit test:
+
+```powershell
+.\gradlew.bat :app:testDebugUnitTest
+```
 
 ## Permission
 Aplikasi ini menggunakan permission:
@@ -289,7 +316,7 @@ cd sumifyai
 ### Jalankan Setelah Copy
 1. Buka project di Android Studio.
 2. Sinkronkan Gradle.
-3. Sesuaikan base URL backend di `Settings` bila perlu.
+3. Sesuaikan base URL backend melalui Gradle property atau environment variable bila perlu.
 4. Jalankan aplikasi di emulator atau device.
 
 ## Kontribusi
@@ -327,4 +354,6 @@ Template Pull Request dan Issue juga tersedia di folder `.github`.
 Lisensi project belum ditentukan. Tentukan lisensi sebelum project dipublikasikan atau digunakan ulang oleh pihak lain.
 
 ## Catatan
-Base URL API bisa diubah dari menu settings. Default endpoint saat berjalan di emulator mengarah ke `http://10.0.2.2:8000/`.
+Base URL API tidak disimpan di UI. Default endpoint debug pada Android Emulator
+mengarah ke `http://10.0.2.2:8000/`, sedangkan build release wajib menerima
+endpoint HTTPS melalui konfigurasi build.

@@ -61,7 +61,7 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,6 +78,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import id.antasari.sumifyai.ui.theme.BackgroundLight
 import id.antasari.sumifyai.ui.theme.BorderLight
 import id.antasari.sumifyai.ui.theme.ColorCompleted
@@ -91,13 +92,13 @@ import id.antasari.sumifyai.ui.theme.SurfaceLightCard
 import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
-import id.antasari.sumifyai.ui.viewmodel.MainViewModel
+import id.antasari.sumifyai.ui.viewmodel.CreateSummaryViewModel
 import id.antasari.sumifyai.ui.viewmodel.UploadState
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateSummaryScreen(
-    viewModel: MainViewModel,
+    viewModel: CreateSummaryViewModel,
     onNavigateBack: () -> Unit,
     onUploadSuccess: (String) -> Unit
 ) {
@@ -108,10 +109,18 @@ fun CreateSummaryScreen(
     var language by remember { mutableStateOf("id") }
     var selectedTabIndex by remember { mutableStateOf(0) }
 
-    val selectedAudioName by viewModel.selectedAudioName.collectAsState()
-    val isRecording by viewModel.isRecording.collectAsState()
-    val recordDurationSeconds by viewModel.recordDurationSeconds.collectAsState()
-    val uploadState by viewModel.uploadState.collectAsState()
+    val selectedAudioName by viewModel.selectedAudioName.collectAsStateWithLifecycle()
+    val isRecording by viewModel.isRecording.collectAsStateWithLifecycle()
+    val recordDurationSeconds by viewModel.recordDurationSeconds.collectAsStateWithLifecycle()
+    val uploadState by viewModel.uploadState.collectAsStateWithLifecycle()
+    val message by viewModel.message.collectAsStateWithLifecycle()
+
+    LaunchedEffect(message) {
+        message?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.consumeMessage()
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose {

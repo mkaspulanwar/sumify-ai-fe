@@ -18,7 +18,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,21 +27,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import id.antasari.sumifyai.ui.components.SumifyTopAppBar
 import id.antasari.sumifyai.ui.components.SumifyTopBarContentColor
 import id.antasari.sumifyai.ui.theme.BackgroundLight
 import id.antasari.sumifyai.ui.theme.TextMuted
 import id.antasari.sumifyai.ui.theme.TextPrimary
 import id.antasari.sumifyai.ui.theme.TextSecondary
-import id.antasari.sumifyai.ui.viewmodel.MainViewModel
+import id.antasari.sumifyai.ui.viewmodel.DashboardViewModel
 
 @Composable
 fun FavoriteSummariesScreen(
-    viewModel: MainViewModel,
+    viewModel: DashboardViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToDetails: (String, String) -> Unit
 ) {
-    val meetings by viewModel.history.collectAsState()
+    val meetings by viewModel.history.collectAsStateWithLifecycle()
     val favoriteMeetings = remember(meetings) {
         meetings.filter { it.isFavorite }
     }
