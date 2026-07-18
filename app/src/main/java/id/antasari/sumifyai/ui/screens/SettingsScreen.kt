@@ -23,12 +23,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -36,9 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -64,14 +58,8 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val apiBaseUrl by viewModel.apiBaseUrl.collectAsState()
     val isDemoMode by viewModel.isDemoMode.collectAsState()
     val meetings by viewModel.history.collectAsState()
-    
-    var urlInput by remember { mutableStateOf(apiBaseUrl) }
-    var isTestingConnection by remember { mutableStateOf(false) }
-    var connectionResult by remember { mutableStateOf<String?>(null) }
-    var isConnectionSuccess by remember { mutableStateOf<Boolean?>(null) }
 
     Scaffold(
         containerColor = BackgroundLight,
@@ -151,129 +139,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 3. API Connection Section
-            Text(
-                text = "Backend Server Connection",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = PrimaryIndigo,
-                letterSpacing = 0.5.sp
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(BorderStroke(1.dp, BorderLight), RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = SurfaceLightCard),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Configure connection URL to poll FastAPI server.",
-                        fontSize = 13.sp,
-                        color = TextSecondary,
-                        lineHeight = 18.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = urlInput,
-                        onValueChange = { urlInput = it },
-                        label = { Text("API Endpoint URL", color = TextSecondary) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedBorderColor = PrimaryIndigo,
-                            unfocusedBorderColor = BorderLight,
-                            focusedLabelColor = PrimaryIndigo,
-                            cursorColor = PrimaryIndigo
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = {
-                            if (urlInput.trim().isNotEmpty()) {
-                                viewModel.updateApiBaseUrl(urlInput)
-                                connectionResult = null
-                                isConnectionSuccess = null
-                            } else {
-                                Toast.makeText(context, "API URL cannot be empty", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        enabled = !isDemoMode && urlInput.trim().isNotEmpty(),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = PrimaryIndigo,
-                            disabledContainerColor = BorderLight.copy(alpha = 0.5f)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "Update API Connection",
-                            color = if (isDemoMode || urlInput.trim().isEmpty()) TextMuted else Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Button(
-                        onClick = {
-                            isTestingConnection = true
-                            connectionResult = null
-                            isConnectionSuccess = null
-                            viewModel.testApiConnection { success, message ->
-                                isTestingConnection = false
-                                isConnectionSuccess = success
-                                connectionResult = message
-                            }
-                        },
-                        enabled = !isDemoMode && !isTestingConnection && urlInput.trim().isNotEmpty(),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Transparent,
-                            disabledContainerColor = BorderLight.copy(alpha = 0.3f)
-                        ),
-                        border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.35f)),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (isTestingConnection) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                color = PrimaryIndigo,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        Text(
-                            text = if (isTestingConnection) "Testing..." else "Test API Connection",
-                            color = if (isDemoMode || urlInput.trim().isEmpty()) TextMuted else PrimaryIndigo,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    connectionResult?.let { message ->
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = message,
-                            color = if (isConnectionSuccess == true) PrimaryIndigo else Color.Red,
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 4. Data Management Section
+            // 2. Data Management Section
             Text(
                 text = "Data Management",
                 fontSize = 14.sp,
@@ -341,7 +207,6 @@ fun SettingsScreen(
                     SettingsInfoRow(label = "Version", value = "1.0.0")
                     SettingsInfoRow(label = "Mode", value = if (isDemoMode) "Demo" else "Online")
                     SettingsInfoRow(label = "Reports", value = meetings.size.toString())
-                    SettingsInfoRow(label = "Endpoint", value = apiBaseUrl)
                 }
             }
 

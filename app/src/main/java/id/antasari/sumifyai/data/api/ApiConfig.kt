@@ -1,69 +1,57 @@
 package id.antasari.sumifyai.data.api
 
-import android.content.Context
+import id.antasari.sumifyai.BuildConfig
 import okhttp3.OkHttpClient
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiConfig {
-    private const val PREFS_NAME = "sumifyai_prefs"
-    private const val KEY_BASE_URL = "api_base_url"
-    
-    // Default to Android Emulator host localhost mapping
-    const val DEFAULT_BASE_URL = "http://10.0.2.2:8000/"
-
-    private var activeService: SumifyApiService? = null
-    private var activeUrl: String? = null
-
-    fun getBaseUrl(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        var url = prefs.getString(KEY_BASE_URL, DEFAULT_BASE_URL) ?: DEFAULT_BASE_URL
-        // Ensure URL ends with a slash
-        if (!url.endsWith("/")) {
-            url += "/"
+    private val baseUrl: String by lazy {
+        val configuredUrl = BuildConfig.API_BASE_URL.trim()
+        require(configuredUrl.isNotEmpty()) {
+            "API base URL is not configured for this build."
         }
-        return url
+
+        val normalizedUrl = if (configuredUrl.endsWith("/")) {
+            configuredUrl
+        } else {
+            "$configuredUrl/"
+        }
+
+        val parsedUrl = normalizedUrl.toHttpUrlOrNull()
+        require(parsedUrl != null) {
+            "API base URL is invalid: $normalizedUrl"
+        }
+        require(BuildConfig.DEBUG || parsedUrl.isHttps) {
+            "Release API base URL must use HTTPS."
+        }
+        normalizedUrl
     }
 
-    fun setBaseUrl(context: Context, newUrl: String) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        var formattedUrl = newUrl.trim()
-        if (formattedUrl.isNotEmpty() && !formattedUrl.endsWith("/")) {
-            formattedUrl += "/"
-        }
-        prefs.edit().putString(KEY_BASE_URL, formattedUrl).apply()
-        // Reset cached instances
-        activeService = null
-        activeUrl = null
-    }
-
-    fun getApiService(context: Context): SumifyApiService {
-        val url = getBaseUrl(context)
-        if (activeService != null && activeUrl == url) {
-            return activeService!!
-        }
-
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-
-        val okHttpClient = OkHttpClient.Builder()
-            .addInterceptor(logging)
+    private val serviceInstance: SumifyApiService by lazy {
+        val clientBuilder = OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
-            .build()
 
-        val retrofit = Retrofit.Builder()
-            .baseUrl(url)
+        if (BuildConfig.DEBUG) {
+            clientBuilder.addInterceptor(
+                HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                }
+            )
+        }
+
+        Retrofit.Builder()
+            .baseUrl(baseUrl)
             .addConverterFactory(GsonConverterFactory.create())
-            .client(okHttpClient)
+            .client(clientBuilder.build())
             .build()
-
-        activeUrl = url
-        activeService = retrofit.create(SumifyApiService::class.java)
-        return activeService!!
+            .create(SumifyApiService::class.java)
     }
+
+    fun getApiService(): SumifyApiService = serviceInstance
 }

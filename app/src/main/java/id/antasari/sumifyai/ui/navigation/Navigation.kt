@@ -46,7 +46,6 @@ fun AppNavigation(
     ) {
         composable(Routes.WELCOME) {
             WelcomeScreen(
-                viewModel = viewModel,
                 onNavigateToDashboard = {
                     viewModel.completeWelcome {
                         navController.navigate(Routes.DASHBOARD) {

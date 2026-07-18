@@ -25,13 +25,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.TimeUnit
 import java.util.UUID
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -39,10 +36,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val PREFS_NAME = "sumifyai_prefs"
     private val KEY_DEMO_MODE = "demo_mode_active"
     private val appPreferencesManager = AppPreferencesManager(context)
-
-    // API Base URL config
-    private val _apiBaseUrl = MutableStateFlow(ApiConfig.getBaseUrl(context))
-    val apiBaseUrl: StateFlow<String> = _apiBaseUrl.asStateFlow()
 
     private val _hasSeenWelcome = MutableStateFlow<Boolean?>(null)
     val hasSeenWelcome: StateFlow<Boolean?> = _hasSeenWelcome.asStateFlow()
@@ -112,43 +105,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateApiBaseUrl(newUrl: String) {
-        ApiConfig.setBaseUrl(context, newUrl)
-        _apiBaseUrl.value = ApiConfig.getBaseUrl(context)
-        Toast.makeText(context, "API URL updated: ${_apiBaseUrl.value}", Toast.LENGTH_SHORT).show()
-    }
-
     fun toggleDemoMode(enabled: Boolean) {
         sharedPrefs.edit().putBoolean(KEY_DEMO_MODE, enabled).apply()
         _isDemoMode.value = enabled
         val stateText = if (enabled) "Demo Mode (Simulation) active" else "Online Mode active"
         Toast.makeText(context, stateText, Toast.LENGTH_SHORT).show()
-    }
-
-    fun testApiConnection(onResult: (Boolean, String) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val baseUrl = ApiConfig.getBaseUrl(context)
-            val client = OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .readTimeout(5, TimeUnit.SECONDS)
-                .build()
-            val request = Request.Builder()
-                .url(baseUrl)
-                .get()
-                .build()
-
-            val result = try {
-                client.newCall(request).execute().use { response ->
-                    true to "Server terhubung (${response.code})"
-                }
-            } catch (e: Exception) {
-                false to "Tidak bisa terhubung: ${e.localizedMessage ?: "Network error"}"
-            }
-
-            withContext(Dispatchers.Main) {
-                onResult(result.first, result.second)
-            }
-        }
     }
 
     // --- AUDIO RECORDING UTILITIES ---
@@ -326,7 +287,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun runRealNetworkUpload(title: String, description: String, language: String, file: File, onUploadSuccess: (String) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val apiService = ApiConfig.getApiService(context)
+                val apiService = ApiConfig.getApiService()
 
                 val requestFile = file.asRequestBody("audio/*".toMediaTypeOrNull())
                 val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
@@ -415,7 +376,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 var shouldPoll = true
                 while (shouldPoll) {
                     try {
-                        val apiService = ApiConfig.getApiService(context)
+                        val apiService = ApiConfig.getApiService()
                         val details = apiService.getMeetingDetails(meetingId)
 
                         LocalHistoryManager.updateMeetingStatus(

@@ -68,8 +68,7 @@ Project ini adalah client mobile untuk workflow pembuatan meeting summary. Fokus
 - Tandai meeting sebagai favorit
 - Hapus meeting dari riwayat
 - Unduh file PDF ke folder Downloads
-- Konfigurasi base URL API dari aplikasi
-- Test koneksi server dari settings
+- Konfigurasi endpoint FastAPI berdasarkan build environment
 
 ## Arsitektur
 Proyek ini memakai pola **Single-Activity + Jetpack Compose + MVVM**.
@@ -91,9 +90,9 @@ Alur utamanya:
 | Entry Point | `MainActivity` | Menginisialisasi theme, navigation controller, dan menentukan start destination berdasarkan status welcome. |
 | Presentation | `ui/screens`, `ui/components`, `ui/theme` | Menampilkan UI berbasis Jetpack Compose, menerima event user, dan membaca state dari ViewModel. |
 | Navigation | `ui/navigation/Navigation.kt` | Mengatur route antar halaman seperti welcome, dashboard, create summary, status progress, details, favorites, dan settings. |
-| State Holder | `ui/viewmodel/MainViewModel.kt` | Mengelola state aplikasi, recording, upload, polling status, history, favorite, download PDF, demo mode, dan konfigurasi API. |
-| Data API | `data/api` | Menyediakan Retrofit service dan konfigurasi base URL untuk komunikasi dengan backend. |
-| Data Local | `data/local` | Menyimpan preferensi onboarding, API URL, demo mode, dan riwayat meeting lokal. |
+| State Holder | `ui/viewmodel/MainViewModel.kt` | Mengelola state aplikasi, recording, upload, polling status, history, favorite, download PDF, dan demo mode. |
+| Data API | `data/api` | Menyediakan Retrofit service untuk komunikasi dengan backend FastAPI menggunakan konfigurasi build. |
+| Data Local | `data/local` | Menyimpan preferensi onboarding, demo mode, dan riwayat meeting lokal. |
 | Model | `data/model` | Mendefinisikan response API dan model lokal meeting. |
 | Utility | `utils/AudioRecorder.kt` | Menangani perekaman audio dari mikrofon perangkat. |
 
@@ -235,6 +234,40 @@ Aplikasi ini menggunakan permission:
 - Backend API jika ingin memakai mode online
 
 ## Build
+Endpoint backend tidak dapat diubah dari UI. Aplikasi membaca endpoint dari `BuildConfig` agar konfigurasi jaringan mengikuti environment deployment.
+
+Build debug secara default memakai FastAPI lokal melalui alamat Android Emulator:
+
+```text
+http://10.0.2.2:8000/
+```
+
+Untuk mengganti endpoint debug, gunakan Gradle property:
+
+```powershell
+.\gradlew.bat assembleDebug -PSUMIFY_DEBUG_API_BASE_URL=https://dev-api.example.com/
+```
+
+atau environment variable:
+
+```powershell
+$env:SUMIFY_DEBUG_API_BASE_URL="https://dev-api.example.com/"
+.\gradlew.bat assembleDebug
+```
+
+Build release wajib menerima endpoint HTTPS. Build akan gagal jika nilainya kosong atau memakai HTTP:
+
+```powershell
+$env:SUMIFY_RELEASE_API_BASE_URL="https://api.example.com/"
+.\gradlew.bat assembleRelease
+```
+
+Nilai tersebut juga dapat disimpan di Gradle user properties pada `~/.gradle/gradle.properties`, bukan di repository:
+
+```properties
+SUMIFY_RELEASE_API_BASE_URL=https://api.example.com/
+```
+
 Jalankan dari Android Studio atau via Gradle:
 ```bash
 ./gradlew assembleDebug

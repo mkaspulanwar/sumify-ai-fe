@@ -4,6 +4,32 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+fun String.asBuildConfigString(): String =
+    "\"${replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")}\""
+
+val debugApiBaseUrl = providers.gradleProperty("SUMIFY_DEBUG_API_BASE_URL")
+    .orElse(providers.environmentVariable("SUMIFY_DEBUG_API_BASE_URL"))
+    .getOrElse("http://10.0.2.2:8000/")
+
+val releaseApiBaseUrl = providers.gradleProperty("SUMIFY_RELEASE_API_BASE_URL")
+    .orElse(providers.environmentVariable("SUMIFY_RELEASE_API_BASE_URL"))
+    .getOrElse("")
+
+val verifyReleaseApiBaseUrl by tasks.registering {
+    doLast {
+        check(releaseApiBaseUrl.isNotBlank()) {
+            "Set SUMIFY_RELEASE_API_BASE_URL before building a release."
+        }
+        check(releaseApiBaseUrl.startsWith("https://")) {
+            "SUMIFY_RELEASE_API_BASE_URL must use HTTPS."
+        }
+    }
+}
+
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(verifyReleaseApiBaseUrl)
+}
+
 android {
     namespace = "id.antasari.sumifyai"
     compileSdk {
@@ -21,8 +47,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", debugApiBaseUrl.asBuildConfigString())
+        }
         release {
             isMinifyEnabled = false
+            buildConfigField("String", "API_BASE_URL", releaseApiBaseUrl.asBuildConfigString())
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,6 +67,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
